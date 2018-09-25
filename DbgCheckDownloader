@@ -1,0 +1,32 @@
+downloader.c
+
+// Debugger Check + PowerShell callout + Downloader!!!
+#include <windows.h>
+#include <stdio.h>
+#include <urlmon.h>                 //Needed for the URLDownloadToFile() function
+// added urlmon.dll through linker settings
+#include <winreg.h>
+
+int main(){
+	printf("Begin debugger check..........\n#################\n#################\n#################\n#################\n");
+	BOOL WINAPI debugFlag = IsDebuggerPresent();
+	if (debugFlag == 0){
+		printf("Passed Debugger Check!\n\n");
+	//system("start powershell.exe Invoke-WebRequest http://www.rinseandrepeatanalysis.blogspot.com");
+	system("start powershell.exe $w = New-Object Net.Webclient; $w.DownloadString('http://www.rinseandrepeatanalysis.blogspot.com')");
+	HRESULT hr = URLDownloadToFile( NULL, "https://www.sans.org/reading-room/whitepapers/malicious/malware-analysis-introduction-2103", "C:\\Users\\jahau\\Desktop\\malware-analysis-introduction-2103.pdf", 0, NULL );
+	
+	// adding registry module
+	//LONG WINAPI = RegCreateKeyEx( HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\Run', 0, NULL, 0x00000004L, 0xF003F, NULL, hand, 0x00000001L );
+	printf("EXECUTION COMPLETE! PROCESS EXITING!\n\n\n\n");
+	
+	HANDLE WINAPI hCurrentProcess = GetCurrentProcess();
+	BOOL TerminateProcess(hCurrentProcess);
+	return 0;
+	}
+	else {
+	printf("DEBUGGER DETECTED! PROCESS EXITING!\n");  
+	HANDLE WINAPI hCurrentProcess = GetCurrentProcess();
+	BOOL TerminateProcess(hCurrentProcess);
+}
+}
