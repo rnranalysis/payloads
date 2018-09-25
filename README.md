@@ -1,2 +1,2 @@
-# payloads
-/k calc.exe
+# payloads for testing
+
