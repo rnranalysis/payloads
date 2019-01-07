@@ -13,10 +13,6 @@ namespace sepunq
         {
             if (args.Length < 2)
             {
-                invalid();
-            }
-            else if (args[0] == "help" || args[0] == "/?" || args[0] == "?" || args[0] == "-h" || args[0] == "--help") 
-            {
                 help();
             }
             else
@@ -49,11 +45,6 @@ namespace sepunq
             Console.WriteLine("Author: James Haughom Jr");
             Console.WriteLine("GitHub: https://github.com/rnranalysis/payloads/blob/master/sepunq.cs");
             Console.Write("\nCommand Syntax: sepunq.exe quarantined.VBN outfile.bin\n");
-        }
-        static void invalid()
-        {
-            Console.WriteLine("\nInvalid parameters provided!\n\n");
-            help();
         }
     }
 }
