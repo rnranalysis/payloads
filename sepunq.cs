@@ -48,14 +48,12 @@ namespace sepunq
             Console.WriteLine("\nDecrypt/Extract files quarantined by SEP");
             Console.WriteLine("Author: James Haughom Jr");
             Console.WriteLine("GitHub: https://github.com/rnranalysis/payloads/blob/master/sepunq.cs");
-            Console.Write("\nCommand Syntax: sepunq.exe quarantined.VBN outfile.bin");
+            Console.Write("\nCommand Syntax: sepunq.exe quarantined.VBN outfile.bin\n");
         }
         static void invalid()
         {
             Console.WriteLine("\nInvalid parameters provided!\n\n");
             help();
-            Console.WriteLine("\n\nPress any key to exit: ");
-            Console.ReadKey();
         }
     }
 }
