@@ -1,1 +1,0 @@
-start-process calc.exe
