@@ -63,7 +63,16 @@ def parseTCP():
     seqNum = binascii.hexlify(tcp_hdr[2])
     ackNum = binascii.hexlify(tcp_hdr[3])
     flags = binascii.hexlify(tcp_hdr[5])
-    return int(srcPortHex, 16), int(dstPortHex, 16), int(seqNum, 16), int(ackNum, 16), int(flags, 16)
+    data = packet[0][54:totalLen]
+    dataLen = totalLen - 54
+    d = ''
+    if (dataLen > 0):
+            fmt = "!" + str(dataLen) + "s"
+            d = struct.unpack(fmt, data)
+            data = binascii.hexlify(d[0])
+    else:
+        print("No data following TCP Header")
+    return int(srcPortHex, 16), int(dstPortHex, 16), int(seqNum, 16), int(ackNum, 16), int(flags, 16), d
 
 def parseUDP():
     udpHeader = packet[0][34:42]
@@ -77,7 +86,7 @@ def parseUDP():
     fmt = "!" + str(dataLen) + "s"
     d = struct.unpack(fmt, data)
     data = binascii.hexlify(d[0])
-    return int(srcPort, 16), int(dstPort, 16), int(str(dataLen), 16), udpChkSum, data
+    return int(srcPort, 16), int(dstPort, 16), int(str(dataLen), 16), udpChkSum, d[0]
 
 def main():
     ethHead = parseEthernetHeader() #returns (destMac, srcMac, ethtype)
@@ -97,6 +106,7 @@ def main():
         print("Sequence Number: " + str(tcpHead[2]))
         print("Acknowledgement Number: " + str(tcpHead[3]))
         print("Flags: " + str(tcpHead[4]))
+        print("Data: " + str(tcpHead[5]))
     elif (ipHead[0] == "UDP"):
         udpHead = parseUDP() # returns srcPort, dstPort, dataLen, chkSum, data
         print("Source Port: " + str(udpHead[0]))
