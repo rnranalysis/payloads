@@ -53,30 +53,19 @@ def parseTCP(packet, ipLen):
     flags = binascii.hexlify(tcp_hdr[5])
 
 def parseUDP(packet, ipLen):
-    offset = 14 + int(ipLen)
-    print("Offset: " + str(offset))
-    o = offset + 8
-    print("O: " + str(o))
-    udpHeader = packet[0][offset:o]
-    print(type(udpHeader))
-    print(len(udpHeader))
+    udpHeader = packet[0][34:42]
     udp_hdr = struct.unpack("!2s2s2s2s", udpHeader)
-    
     srcPort = binascii.hexlify(udp_hdr[0])
     dstPort = binascii.hexlify(udp_hdr[1])
     udpLen = binascii.hexlify(udp_hdr[2])
-    print("UDP Length: " + udpLen)
     udpChkSum = binascii.hexlify(udp_hdr[3])
-    totalLen = int(udpLen, 16) + 14 + ipLen
-    print("Total Len: " + totalLen)
     udpDataLen = int(udpLen, 16) - 8
-    print("UDP Data Len: " + udpDataLen)
-    dataOffset = totalLen - 8 - 14 - ipLen
-    udpData = packet[0][dataOffset:totalLen]
-    fmt = "!" + str(int(dataLen,16)) + "s"
-    d = struct.unpack(fmt, udpData)
+    fmt = "!" + str(udpDataLen) + "s"
+    s = 42 + udpDataLen
+    u = packet[0][42:s]
+    d = struct.unpack(fmt, u)
     data = binascii.hexlify(d[0])
-    return int(srcPort, 16), int(dstPort, 16), int(str(dataLen), 16), udpChkSum, d[0]
+    return int(srcPort, 16), int(dstPort, 16), int(str(udpDataLen), 16), udpChkSum, d[0]
 
 def main():
     while True:
