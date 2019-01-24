@@ -67,10 +67,22 @@ def parseUDP(packet, ipLen):
     data = binascii.hexlify(d[0])
     return int(srcPort, 16), int(dstPort, 16), int(str(udpDataLen), 16), udpChkSum, d[0]
 
+def parseDNS(packet, ipLen):
+    dnsHeader = packet[0][42:54]
+    dns_hdr = struct.unpack("!2s2s2s2s2s2s", dnsHeader)
+    transID = binascii.hexlify(dns_hdr[0])
+    flags = binascii.hexlify(dns_hdr[1])
+    qstCt = binascii.hexlify(dns_hdr[2])
+    ansrCt = binascii.hexlify(dns_hdr[3])
+    atyCt = binascii.hexlify(dns_hdr[4])
+    addCt = binascii.hexlify(dns_hdr[5])
+    return transID, flags, str(qstCt), str(ansrCt), str(atyCt), str(addCt) 
+
 def main():
     while True:
         packet = rawSock()# return packet of raw socket
         ethHead = parseEthernetHeader(packet)#returns (destMac, srcMac, ethtype)
+        print("##############################")
         print("Destination Mac: " + ethHead[0])
         print("Source Mac: " + ethHead[1])
         print("Ethernet Type: " + ethHead[2])
@@ -95,5 +107,16 @@ def main():
                 print("Data Length: " + str(udpHead[2]))
                 print("Checksum: " + str(udpHead[3]))
                 print("Data: " + str(udpHead[4]))
+                if (udpHead[0] == 53 or udpHead[1] == 53):
+                    dnsHead = parseDNS(packet, ipLen)
+                    print("Transaction ID: " + dnsHead[0])
+                    print("Flags: " + dnsHead[1])
+                    print("Question count: " + dnsHead[2])
+                    print("Answer RR: " + dnsHead[3])
+                    print("Authority RR: " + dnsHead[4])
+                    print("Additional RR: " + dnsHead[5])
+                    print("##############################\n")
+                else:
+                    print("nah")
 
 main()
