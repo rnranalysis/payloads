@@ -78,6 +78,9 @@ def parseDNS(packet, ipLen):
     addCt = binascii.hexlify(dns_hdr[5])
     return transID, flags, str(qstCt), str(ansrCt), str(atyCt), str(addCt) 
 
+def parseHTTP(packet):
+    httpHeader = packet[0][42:44]
+
 def main():
     while True:
         packet = rawSock()# return packet of raw socket
@@ -99,7 +102,9 @@ def main():
                 print("Sequence Number: " + str(tcpHead[2]))
                 print("Acknowledgement Number: " + str(tcpHead[3]))
                 print("Flags: " + str(tcpHead[4]))
-                print("Data: " + str(tcpHead[5]))  
+                print("Data: " + str(tcpHead[5]))
+                if (tcpHead[0] == 80 or tcpHead[0] == 443 or tcpHead[1] == 80 or tcpHead[1] == 443):
+                     parseHTTP(packet)
         elif (ipHead[0] == "UDP"):
                 udpHead = parseUDP(packet, ipLen) # returns srcPort, dstPort, dataLen, chkSum, data
                 print("Source Port: " + str(udpHead[0]))
@@ -116,6 +121,7 @@ def main():
                     print("Authority RR: " + dnsHead[4])
                     print("Additional RR: " + dnsHead[5])
                     print("##############################\n")
+                
                 else:
                     print("nah")
 
