@@ -3,6 +3,17 @@ import binascii
 import struct
 
 # IPv4 raw socket
+# hexdump courtesy of https://gist.github.com/sbz/1080258
+def hexdump(src, length=16):
+    FILTER = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
+    lines = []
+    for c in xrange(0, len(src), length):
+        chars = src[c:c+length]
+        hex = ' '.join(["%02x" % ord(x) for x in chars])
+        printable = ''.join(["%s" % ((ord(x) <= 127 and FILTER[ord(x)]) or '.') for x in chars])
+        lines.append("%04x  %-*s  %s\n" % (c, length*3, hex, printable))
+    return ''.join(lines)
+
 def rawSock():
     rawSocket = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(0x0800))
     packet = rawSocket.recvfrom(2048)
@@ -50,7 +61,18 @@ def parseTCP(packet, ipLen):
     dstPortHex = binascii.hexlify(tcp_hdr[1])
     seqNum = binascii.hexlify(tcp_hdr[2])
     ackNum = binascii.hexlify(tcp_hdr[3])
-    flags = binascii.hexlify(tcp_hdr[5])
+    dataOffset = binascii.hexlify(tcp_hdr[4])
+    print("raw: " + str(dataOffset))
+    if (dataOffset == 80):
+        d = 32
+    elif (dataOffset == 50):
+        d = 20
+    else:
+        print("Python sucks")
+    winSize = binascii.hexlify(tcp_hdr[6])
+    chkSum = binascii.hexlify(tcp_hdr[7])
+    urgPtr = binascii.hexlify(tcp_hdr[8])
+    return int(srcPortHex, 16), int(dstPortHex, 16), seqNum, ackNum, d, winSize,chkSum, urgPtr
 
 def parseUDP(packet, ipLen):
     udpHeader = packet[0][34:42]
@@ -78,51 +100,79 @@ def parseDNS(packet, ipLen):
     addCt = binascii.hexlify(dns_hdr[5])
     return transID, flags, str(qstCt), str(ansrCt), str(atyCt), str(addCt) 
 
-def parseHTTP(packet):
-    httpHeader = packet[0][42:44]
+def parseHTTP(packet, data):
+    d = 14 + int(data, 16)
+    r = d + 20
+    print("D: " + str(d) + "\nR: " + str(r))
+    http = packet[0][d:r]
+    print("http: " + http)
+    try:
+         http_hd = struct.unpack("!20s", http)
+         return http_hd[0]
+    except:
+         print("no data")
+         return "no data"
 
 def main():
+    pNum = 0
     while True:
         packet = rawSock()# return packet of raw socket
         ethHead = parseEthernetHeader(packet)#returns (destMac, srcMac, ethtype)
+        print("\n##############################")
+        pNum += pNum + 1
+        print("START Packet no. " + str(pNum))
         print("##############################")
+        print("-----------Ethernet-----------")
+        #print("-----------------------------")
         print("Destination Mac: " + ethHead[0])
         print("Source Mac: " + ethHead[1])
         print("Ethernet Type: " + ethHead[2])
         ipHead = parseIPHeader(packet) # returns (protocol, ipLen, srcAddr, destAddr)
+        print("-------------IP--------------")
         print("Protocol: " + ipHead[0])
-        print("Total IP Length: " + ipHead[1])
+        print("Total Length: " + ipHead[1])
         ipLen = ipHead[1]
         print("Source Address: " + ipHead[2])
         print("Destination Address: " + ipHead[3])
         if (ipHead[0] == "TCP"):
-                tcpHead = parseTCP(packet, ipLen) # returns srcPort, dstPort, seqNum, ackNum, flags
+                tcpHead = parseTCP(packet, ipLen) # returns srcPort, dstPort, seqNum, ackNum, dataOffset, winSize,chkSum, urgPtr
+                print("------------TCP------------")
                 print("Source Port: " + str(tcpHead[0]))
                 print("Destination Port: " + str(tcpHead[1]))
                 print("Sequence Number: " + str(tcpHead[2]))
                 print("Acknowledgement Number: " + str(tcpHead[3]))
-                print("Flags: " + str(tcpHead[4]))
-                print("Data: " + str(tcpHead[5]))
+                print("Data Offset: " + str(tcpHead[4]))
+                print("Window Size: " + str(tcpHead[5]))
+                print("Check sum: " + str(tcpHead[6]))
+                print("Urgent Pointer: " + str(tcpHead[7]))
                 if (tcpHead[0] == 80 or tcpHead[0] == 443 or tcpHead[1] == 80 or tcpHead[1] == 443):
-                     parseHTTP(packet)
+                     httpHead = parseHTTP(packet, tcpHead[4])
+                     print(hexdump(str(httpHead)))
+                     
         elif (ipHead[0] == "UDP"):
                 udpHead = parseUDP(packet, ipLen) # returns srcPort, dstPort, dataLen, chkSum, data
+                print("------------UDP--------------")
                 print("Source Port: " + str(udpHead[0]))
                 print("Destination Port: " + str(udpHead[1]))
-                print("Data Length: " + str(udpHead[2]))
+                #print("Data Length: " + str(udpHead[2]))
                 print("Checksum: " + str(udpHead[3]))
-                print("Data: " + str(udpHead[4]))
                 if (udpHead[0] == 53 or udpHead[1] == 53):
                     dnsHead = parseDNS(packet, ipLen)
+                    print("------------DNS------------")
                     print("Transaction ID: " + dnsHead[0])
                     print("Flags: " + dnsHead[1])
                     print("Question count: " + dnsHead[2])
                     print("Answer RR: " + dnsHead[3])
                     print("Authority RR: " + dnsHead[4])
                     print("Additional RR: " + dnsHead[5])
-                    print("##############################\n")
-                
                 else:
                     print("nah")
-
+        print("------------Dump-------------")
+        if (ipHead[0] == "UDP"):
+             print(hexdump(str(udpHead[4])))
+        elif (ipHead[0] == "TCP"):
+             print(hexdump(str(httpHead)))
+        print("##############################")
+        print("END Packet no. " + str(pNum))
+        print("##############################\n")
 main()
