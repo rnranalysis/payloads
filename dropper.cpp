@@ -5,6 +5,7 @@
 #include <tchar.h>
 #include <cstring>
 #include <string.h>
+
 #define DIV 1024
 
 HANDLE ps;
@@ -17,6 +18,19 @@ int exit()
 	return 0;
 }
 
+int dbgchk()
+{
+	BOOL flag = IsDebuggerPresent();
+	if (flag != 0)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+	
+}
 int sysinfo()
 {
 	SYSTEM_INFO sysinfo;
@@ -24,21 +38,23 @@ int sysinfo()
 	int numCPU = sysinfo.dwNumberOfProcessors;
 	if (numCPU < 2)
 	{
-		exit();
+		return 1;
 	}
 	MEMORYSTATUSEX mem;
 	mem.dwLength = sizeof(mem);
 	GlobalMemoryStatusEx(&mem);
 	if (mem.ullTotalVirtual < 2147483648)
 	{
-		exit();
+		return 1;
 	}
-	//std::cout << "\nTotal Virtual Avail: " << mem.ullTotalVirtual / DIV << "kb";
-	//std::cout << "\nTotal Physical Avail: " << mem.ullTotalPhys / DIV << "kb";
+	else
+	{
+		return 0;
+	}
 }
-int pschk() 
+
+int pschk()
 {
-	printf("Process Check\n---------------");
 	ps = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
 	psinfo.dwSize = sizeof(PROCESSENTRY32);
 	if (!Process32First(ps, &psinfo))
@@ -49,12 +65,11 @@ int pschk()
 	else
 	{
 		WCHAR* s = psinfo.szExeFile;
-		_tprintf(TEXT("\nName:  %s"), s);
 		while (Process32Next(ps, &psinfo))
 		{
 			if (wcsstr(s, L"vmacthlp.exe") || (wcsstr(s, L"vmtoolsd.exe")) || (wcsstr(s, L"ProcessHacker.exe")) || (wcsstr(s, L"ProcessHacker.exe")) || (wcsstr(s, L"Procmon")) || (wcsstr(s, L"Regshot")) || (wcsstr(s, L"ollydbg.exe")) || (wcsstr(s, L"x32dbg")) || (wcsstr(s, L"x64dbg")) || (wcsstr(s, L"ida")) || (wcsstr(s, L"Wireshark.exe")))
 			{
-				exit();
+				return 1;
 			}
 		}
 		CloseHandle(ps);
@@ -62,8 +77,36 @@ int pschk()
 	return 0;
 }
 
+void read_directory()
+{
+	LPCWSTR dir = L"C:\\Program Files\\";
+	WIN32_FIND_DATA data;
+	HANDLE hFile;
+	if (!FindFirstFile(dir, &data))
+	{
+		int err = GetLastError();
+		std::cout << "FindFirstFile Error: " << err;
+	} 
+	while (FindNextFile(hFile, &data))
+	{
+
+		FindClose(hFile);
+	}
+}
 int main()
 {
-	sysinfo();
-	pschk();
+	if (dbgchk()) // return 1 if dbgflag is set, 0 if not
+	{
+		std::cout << "Debugger detected!";
+		exit();
+	}
+	if (sysinfo()) // return 1 if low processor count or ram 
+	{
+		std::cout << "Low process count/ram";
+	}
+	if (pschk()) // return 1 if analyst tools is in process listing
+	{
+		std::cout << "Analyst tool(s) detected!";
+		//exit();
+	}
 }
