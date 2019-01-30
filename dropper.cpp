@@ -5,7 +5,8 @@
 #include <tchar.h>
 #include <cstring>
 #include <string.h>
-
+#include <strsafe.h>
+#pragma comment(lib, "User32.lib")
 #define DIV 1024
 
 HANDLE ps;
@@ -29,8 +30,9 @@ int dbgchk()
 	{
 		return 0;
 	}
-	
+
 }
+
 int sysinfo()
 {
 	SYSTEM_INFO sysinfo;
@@ -38,11 +40,12 @@ int sysinfo()
 	int numCPU = sysinfo.dwNumberOfProcessors;
 	if (numCPU < 2)
 	{
-		return 1;
+		return 2;
 	}
 	MEMORYSTATUSEX mem;
 	mem.dwLength = sizeof(mem);
 	GlobalMemoryStatusEx(&mem);
+	/*		---- FIX THIS CODEBLOCK!
 	if (mem.ullTotalVirtual < 2147483648)
 	{
 		return 1;
@@ -51,6 +54,8 @@ int sysinfo()
 	{
 		return 0;
 	}
+	*/
+	return 0;
 }
 
 int pschk()
@@ -77,36 +82,77 @@ int pschk()
 	return 0;
 }
 
-void read_directory()
+int appschk()
 {
-	LPCWSTR dir = L"C:\\Program Files\\";
-	WIN32_FIND_DATA data;
-	HANDLE hFile;
-	if (!FindFirstFile(dir, &data))
-	{
-		int err = GetLastError();
-		std::cout << "FindFirstFile Error: " << err;
-	} 
-	while (FindNextFile(hFile, &data))
-	{
+	WIN32_FIND_DATAW w32fd;
+	HANDLE hFind;
+	hFind = FindFirstFileW(L"C:\\Program Files\\*", &w32fd);
 
-		FindClose(hFile);
+	if (INVALID_HANDLE_VALUE == hFind)
+	{
+		std::cout << "FindFirstFile: INVALID HANDLE" << std::endl;
 	}
+
+	while (FindNextFileW(hFind, &w32fd))
+	{
+		WCHAR* s = w32fd.cFileName;
+		if (wcsstr(s, L"Wireshark") || wcsstr(s, L"Process Hacker"))
+		{
+			//std::wcout << "Filename: " << w32fd.cFileName << std::endl;
+			return 1;
+		}
+		
+	}
+	return 0;
+
+	if (ERROR_NO_MORE_FILES != GetLastError())
+ {
+		std::cout << "NO MORE FILES IN DIR" << std::endl;
+ }
+	FindClose(hFind);
+	return 0;
+}
+
+int dirchk()
+{
+	LPSTR cmdline = GetCommandLineA();
+	if (strstr(cmdline, "\\repos\\dropper\\Debug"))
+	{
+		std::cout << "Correct Directory!" << std::endl;
+	}
+	else
+	{
+		std::cout << "Incorrect Directory!" << cmdline << std::endl;
+	}
+	std::cout << "Commandline: " << cmdline << std::endl;
+	return 0;
 }
 int main()
 {
+	dirchk();
 	if (dbgchk()) // return 1 if dbgflag is set, 0 if not
 	{
-		std::cout << "Debugger detected!";
-		exit();
+		std::cout << "Exit: Debugger detected!" << std::endl;
+		//exit();
 	}
-	if (sysinfo()) // return 1 if low processor count or ram 
+	if (appschk())
 	{
-		std::cout << "Low process count/ram";
+		std::cout << "Exit: Analyst tool installed!" << std::endl;
+		//exit();
+	}
+	if (sysinfo() == 2) // return 2 if low processor count, return 1 low ram 
+	{
+		std::cout << "Exit: Low process count" << std::endl;
+		//exit();
+	}
+	else if (sysinfo() == 1)
+	{
+		//std::cout << "Exit: Low RAM" << std::endl;
 	}
 	if (pschk()) // return 1 if analyst tools is in process listing
 	{
-		std::cout << "Analyst tool(s) detected!";
+		std::cout << "Exit: Analyst tool running!" << std::endl;
 		//exit();
 	}
 }
+
