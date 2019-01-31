@@ -17,7 +17,6 @@ PROCESS_INFORMATION pi;
 HANDLE ps;
 PROCESSENTRY32 psinfo;
 
-
 int exit()
 {
 	HANDLE hSelf = GetCurrentProcess();
