@@ -8,6 +8,9 @@
 #include <strsafe.h>
 #include <stdlib.h>
 #include <Processthreadsapi.h>
+#include <array>
+#include <wchar.h>
+#include <string>
 #pragma comment(lib, "User32.lib")
 #define DIV 1024
 using namespace std;
@@ -74,12 +77,20 @@ int pschk()
 	}
 	else
 	{
-		WCHAR* s = psinfo.szExeFile;
+		std::array<std::string, 10> procs;
+		procs = { "vmacthlp.exe", "vmtoolsd.exe", "ProcessHacker.exe", "Procmon",  "Regshot", "ollydbg.exe", "x32dbg", "x64dbg", "ida", "Wireshark"};
+
 		while (Process32Next(ps, &psinfo))
 		{
-			if (wcsstr(s, L"vmacthlp.exe") || (wcsstr(s, L"vmtoolsd.exe")) || (wcsstr(s, L"ProcessHacker.exe")) || (wcsstr(s, L"ProcessHacker.exe")) || (wcsstr(s, L"Procmon")) || (wcsstr(s, L"Regshot")) || (wcsstr(s, L"ollydbg.exe")) || (wcsstr(s, L"x32dbg")) || (wcsstr(s, L"x64dbg")) || (wcsstr(s, L"ida")) || (wcsstr(s, L"Wireshark.exe")))
+			WCHAR* s = psinfo.szExeFile;
+			wstring ws(s);
+			string strProc(ws.begin(), ws.end());
+			for (int i = 0; i < 10; i++)
 			{
-				return 1;
+				if (strProc.find(procs[i]) != std::string::npos)
+				{
+					return 1;
+				}
 			}
 		}
 		CloseHandle(ps);
@@ -103,7 +114,6 @@ int appschk()
 		WCHAR* s = w32fd.cFileName;
 		if (wcsstr(s, L"Wireshark") || wcsstr(s, L"Process Hacker"))
 		{
-			//wcout << "Filename: " << w32fd.cFileName << endl;
 			return 1;
 		}
 
@@ -123,12 +133,10 @@ int dirchk()
 	LPSTR cmdline = GetCommandLineA();
 	if (strstr(cmdline, "\\AppData\\Local\\Temp\\"))
 	{
-		cout << "Correct Directory!" << endl;
 		return 0;
 	}
 	else
 	{
-		cout << "Exit: Incorrect Directory!" << cmdline << endl;
 		return 1;
 	}
 }
@@ -194,9 +202,9 @@ int exec()
 }
 int main()
 {
-	if (dirchk() == 1)
+	if (dirchk())
 	{
-		cout << "Exit: Wrong directory!" << endl;
+		cout << "Exit: Wrong directory!" << endl; // return 1 if not running out of temp directory
 		//exit();
 	}
 	else if (dbgchk()) // return 1 if dbgflag is set, 0 if not
@@ -204,21 +212,21 @@ int main()
 		cout << "Exit: Debugger detected!" << endl;
 		//exit();
 	}
-	else if (appschk())
+	else if (appschk()) // return 1 if installed tool in program files
 	{
 		cout << "Exit: Analyst tool installed!" << endl;
 		//exit();
 	}
-	else if (sysinfo() == 2) // return 2 if low processor count, return 1 low ram 
+	else if (sysinfo() == 2) // return 2 if low processor count
 	{
 		cout << "Exit: Low process count" << endl;
 		//exit();
 	}
-	else if (sysinfo() == 1)
+	else if (sysinfo() == 1) // return 1 if low ram
 	{
 		//cout << "Exit: Low RAM" << endl;
 	}
-	else if (pschk()) // return 1 if analyst tools is in process listing
+	else if (pschk()) // return 1 if analyst tool is in process listing
 	{
 		cout << "Exit: Analyst tool running!" << endl;
 		//exit();
