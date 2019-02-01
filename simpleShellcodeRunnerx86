@@ -1,0 +1,35 @@
+#include "pch.h"
+#include <iostream> 
+#include <fstream>
+#include <Windows.h>
+
+using namespace std;
+
+int exec(const string path)
+{
+	ifstream infile(path, ifstream::binary);
+	infile.seekg(0, infile.end);
+	int length = infile.tellg();
+	infile.seekg(0, infile.beg);
+	char * buffer = new char[length];
+	infile.read(buffer, length);
+	infile.close();
+	std::string s = buffer;
+	(*(int(*)()) buffer)();
+	delete[] buffer;
+	return 0;
+}
+
+int main(int argc, char** argv)
+{
+	if (!argv[1])
+	{
+		cout << "Must provide path to shellcode binary." << endl;
+	}
+	else
+	{
+		const string path = argv[1];
+		exec(path);
+	}
+	return 0;
+}
