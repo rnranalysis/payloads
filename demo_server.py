@@ -1,16 +1,16 @@
+#!/usr/bin/env python
 import socket
 import sys
 import os
 
 cmd = ""
 
-
 def create():
     try:
         global host
         global port
         global s
-        host = 'localhost'
+        host = '10.0.0.1'
         port = 9999
         s = socket.socket()
     except socket.error as msg:
@@ -45,6 +45,8 @@ def ssend(conn):
             conn.close()
             s.close()
             sys.exit()
+        elif cmd == 'clear' or cmd == 'cls':
+            os.system('clear')
         elif args[0] == 'run':
             conn.send('run ' + str(os.path.getsize(args[1])))
             resp = conn.recv(1024)
@@ -55,14 +57,12 @@ def ssend(conn):
                     conn.send(data)
                     data = f.read(1024)
                 f.close()
-                print('PAYLOAD SENT.')
-                data = ''
+                print('\nPAYLOAD SENT.')
                 while True:
                     client_response = str(conn.recv(1024))
                     data += client_response
                     if len(client_response) < 1024:
                         break
-                print(data)
         else:
              print('this is a demo.....try <demo$ run someScript.py>')
 
