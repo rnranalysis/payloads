@@ -1,1 +1,1 @@
-get-process
+write-host 'hey, alex'
