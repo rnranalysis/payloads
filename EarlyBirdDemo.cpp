@@ -26,7 +26,7 @@ int main()
 	if (!CreateProcessA((LPCSTR)"C:\\Windows\\System32\\calc.exe", (LPSTR)NULL, (LPSECURITY_ATTRIBUTES)NULL, (LPSECURITY_ATTRIBUTES)NULL, (BOOL)FALSE, (DWORD)CREATE_SUSPENDED, (LPVOID)NULL, (LPCSTR)NULL, (LPSTARTUPINFOA)&si, (LPPROCESS_INFORMATION)&pi))
 	{
 		DWORD err = GetLastError();
-		std::cout << "CreatProcess Err: " << err << std::endl;
+		std::cout << "CreateProcess Err: " << err << std::endl;
 	}
 	else
 	{
