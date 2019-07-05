@@ -1,5 +1,3 @@
-# CURRENTLY WORKING ON ASSIGNING LABELS TO THE GLOBAL VARS
-
 # REsolve GetProcAddress -> Global Vars
 #@author James Haughom
 #@category _NEW_
