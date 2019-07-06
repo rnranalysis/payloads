@@ -18,7 +18,6 @@ def getSymbol(api, addr):
 	createSymbol(toAddr(addr), api, True)
 
 def getString(addr):
-	byte = 1
 	string = ''
 	byte = getByte(addr)
 	while byte != 0x00:
