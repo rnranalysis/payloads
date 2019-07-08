@@ -5,6 +5,7 @@
 #@menupath 
 #@toolbar 
 
+# currently fixing to work across more malware families
 
 import re
 
