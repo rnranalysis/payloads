@@ -1,63 +1,143 @@
 # REsolve GetProcAddress -> Global Vars
-#@author James Haughom Jr
+#@author James Haughom Jr, Nikhil Hegde
 #@category _NEW_
 #@keybinding 
 #@menupath 
 #@toolbar 
 
-# currently fixing to work across more malware families
+TRUE = 1
+FALSE = 0
 
-import re
+def findRefs(funcAddr):
+    """
+    Finds references to address funcAddr
 
-listing = currentProgram.getListing()
+    Args:
+        funcAddr: address in unicode format
+    Raises:
+    Returns:
+        refList: list of references
+    """
 
-def getString(addr):
-	string = ''
-	byte = getByte(addr)
-	while byte != 0x00:
-		byte = chr(getByte(addr))
-		string += byte
-		addr = addr.add(1)
-		byte = getByte(addr)
-	return(string)
+    refList = []
 
-def getSymbol(api, addr):
-	createSymbol(toAddr(addr), api, True)
+    refs = getReferencesTo(toAddr(funcAddr))
+    for ref in refs:
+        refAddr = ref.fromAddress.toString()
+        refList.append(refAddr)
 
+    print ("[+] References found from addresses: " + str(refList))
+    return refList
+
+def instMnemonic(inst):
+    """
+    Determine if instruction is a CALL, PUSH or MOV
+
+    Args:
+        inst: instruction of type ghidra.program.database.code.InstructionDB
+    Raises:
+    Returns:
+    """
+
+    instStr = inst.toString()
+
+    if "CALL" in instStr:
+        return "CALL"
+    elif "MOV" in instStr:
+        return "MOV"
+    elif "PUSH" in instStr:
+        return "PUSH"
+    else:
+        return "UNKNOWN"
+
+def getOperand(inst, num):
+    """
+    Get the specified operand in an instruction
+
+    Args:
+        inst: instruction of type ghidra.program.database.code.InstructionDB
+        num: integer representing the operand
+    Raises:
+        None
+    Returns:
+        operand
+    """
+
+    pass
+
+def handleMOVRef(ref, inst):
+    """
+    This function handles all steps when the reference address has a
+    MOV <reg>, LoadProcAddress instruction format.
+
+    Args:
+        ref: reference address in unicode format
+        inst: instruction of type ghidra.program.database.code.InstructionDB
+    Raises:
+        None
+    Returns:
+    """
+
+    instList = []
+
+    registerName = getOperand(inst, num=1)
+
+    inst = getInstructionAfter(toAddr(ref))
+    while TRUE:
+        if "CALL" in inst.toString():
+            break
+        instList.append(inst)
+        inst = getInstructionAfter(inst)
+
+    #print (instList)
+
+def findLpProcName(ref, inst, instType):
+    """
+    Determine name of the Windows method that's being loaded using GetProcAddress
+
+    Args:
+        ref: reference address in unicode format
+        inst: instruction of type ghidra.program.database.code.InstructionDB
+        instType: instruction type in string format
+    Raises:
+        None
+    Returns:
+        lpProcName: Name of the Windows method that's being loaded using GetProcAddress
+    """
+
+    if instType == "MOV":
+        handleMOVRef(ref, inst)
+        
 def main():
+    """
+    Args:
+        None
+    Raises:
+        Exception: If GetProcAddress() couldn't be found
+    Returns:
+        None
+    """
 
-	addr = find("GetProcAddress")
-	refs = getReferencesTo(addr)
-	for ref in refs:
-		addrs = re.findall('[a-fA-F0-9]{6,8}', ref.toString())
-		getprocaddr = addrs[0]
-		if getprocaddr: 
-			refs = getReferencesTo(toAddr(getprocaddr))  
-			for ref in refs:  
-				callee = ref.getFromAddress() 
-				inst = getInstructionAt(callee)
-				if re.findall('CALL\s0x[a-fA-F0-9]{6,8}', inst.toString()):
-					search_module_name = getInstructionBefore(inst)
-					while "PUSH" not in search_module_name.toString(): 
-						search_module_name = getInstructionBefore(search_module_name) 
-					if "PUSH" in search_module_name.toString(): 
-						search_api_name = getInstructionBefore(search_module_name) 
-					while "PUSH" not in search_api_name.toString(): 
-						search_api_name = getInstructionBefore(search_api_name) 
-					if "PUSH" in search_api_name.toString(): 
-						api_addr = re.findall('0x[a-fA-F0-9]{6,8}', search_api_name.toString()) 
-						if api_addr:
-							api = getString(toAddr(api_addr[0])) 
-							if ".dll" not in api: 
-								print("[+] " + api + " found at: " + api_addr[0])
-								inst = re.findall('MOV\s\[0x[a-fA-F0-9]{6,8}\],EAX', getInstructionAfter(inst).toString())
-								while not inst:
-									inst = re.findall('MOV\s\[0x[a-fA-F0-9]{6,8}\],EAX', getInstructionAfter(inst).toString())
-								label_addr = re.findall('0x[a-fA-F0-9]{6,8}', inst[0])
-								if inst:
-									print("[+] Labeling " + label_addr[0] + " as " + api + "\n")
-									getSymbol(api, label_addr[0])
-		else:
-			print("[-] GetProcAddress not in functions list.")
+    listing = currentProgram.getListing()
+
+    # Get address of GetProcAddress()
+    # I'm assuming the first find will be the required address. This is a big assumption
+    # and needs to be tested
+    getProcAddressAddr = find("GetProcAddress").toString()
+    if getProcAddressAddr:
+        print("[+] GetProcAddress found at 0x" + getProcAddressAddr)
+    else:
+        raise Exception("[-] Couldn't find GetProcAddress() call: " + str(e))
+
+    # Get references to GetProcAddress()
+    refsList = findRefs(getProcAddressAddr)
+
+    for ref in refsList:
+        # Determine instruction type at ref
+        inst = getInstructionAt(toAddr(ref))
+        instType = instMnemonic(inst)
+        print ("[+] Instruction type " + instType + " found at address: 0x" + ref)
+
+        findLpProcName(ref, inst, instType)
 
 main()
