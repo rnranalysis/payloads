@@ -7,6 +7,8 @@
 
 TRUE = 1
 FALSE = 0
+RENAMESUCCESS = 0
+RENAMEERROR = 0
 
 def findRefs(funcAddr):
     """
@@ -97,6 +99,7 @@ def getWinMethodName(pushInstList):
         lpProcName: Windows method loaded using GetProcAddress in unicode format
     """
 
+    global RENAMEERROR
     winMethodPushInst = pushInstList[1]
 
     # Find reference from extracted address. It should reference a single address
@@ -106,7 +109,16 @@ def getWinMethodName(pushInstList):
     print ("[+]   Windows method loaded is located at address: 0x" + lpProcNameAddr)
     
     # Extract Windows method name
-    lpProcName = getDataAt(toAddr(lpProcNameAddr)).toString()
+    lpProcName = getDataAt(toAddr(lpProcNameAddr))
+    if lpProcName:
+        lpProcName = lpProcName.toString()
+    else:
+        print ("[-]   Undefined data encountered at address 0x" + lpProcNameAddr + \
+               ". Not modifying anything for this CALL")
+        print ("[+]   Possible solution: Go to 0x" + lpProcNameAddr + " and define " + \
+               "data as string. Re-run the script.")
+        RENAMEERROR = RENAMEERROR + 1
+        return None
     lpProcName = lpProcName.split(' ')[-1].replace('"','')
     print ("[+]   Windows method loaded is " + lpProcName)
 
@@ -124,6 +136,8 @@ def renameVarAddr(callInst, lpProcName):
     Returns:
         TRUE if variable rename is successful
     """
+
+    global RENAMESUCCESS
 
     nextInst = getInstructionAfter(callInst)
 
@@ -143,6 +157,7 @@ def renameVarAddr(callInst, lpProcName):
                " could not be modified to addr_" + lpProcName)
         return FALSE
 
+    RENAMESUCCESS = RENAMESUCCESS + 1
     print ("[+]   Symbol at address 0x" + varAddr.toString() + \
            " has been changed to addr_" + lpProcName)
 
@@ -174,7 +189,7 @@ def renameVariable(callInstAddrList):
 
         # Determines the address of the variable into which address of lpProcName
         # is loaded into and renames it
-        if (not renameVarAddr(callInst, lpProcName)):
+        if (lpProcName and not renameVarAddr(callInst, lpProcName)):
             print ("[-] CALL instruction at address 0x" + callAddr + " needs to be looked at")
     
 def getCallInstAddrList(ref, registerName=None, customString=None):
@@ -210,7 +225,7 @@ def getCallInstAddrList(ref, registerName=None, customString=None):
         while callAddr and callAddr < funcEndAddr:
             callInstAddrList.append(callAddr.toString())
             ref = getInstructionAfter(callAddr).getAddress().toString()
-            callAddr = findBytes(toAddr(ref), b'\xFF\xD7')
+            callAddr = findBytes(toAddr(ref), searchPattern["CALL " + registerName])
     elif not registerName and customString:
         pass
     elif registerName and customString:
@@ -237,8 +252,6 @@ def getBoundaryInst(ref, registerName, boundary="CALL"):
     Returns:
         inst: instruction of type ghidra.program.database.code.InstructionDB
     """
-
-    import ghidra.program.model.pcode.SequenceNumber as SequenceNumber
 
     inst = getInstructionAfter(toAddr(ref))
     while TRUE:
@@ -273,8 +286,8 @@ def handleMovRef(ref, inst):
 
 def doMagic(ref, inst, instType):
     """
-    Rename variables that are associated with Windows function that are loaded using
-    GetProcAddress()
+    Call functions that handle renaming of variables that are associated with
+    Windows function that are loaded using GetProcAddress()
 
     Args:
         ref: reference address in unicode format
@@ -290,9 +303,11 @@ def doMagic(ref, inst, instType):
         handleMovRef(ref, inst)
     elif instType == "CALL":
         #handleCallRef(ref, inst)
+        print ("[*] CALL instruction reference. TODO")
         pass
     elif instType == "PUSH":
         #TODO
+        print ("[*] PUSH instruction reference. TODO")
         pass
     elif instType == "OTHER":
         print("[-] Unhandleable instruction type found. Continuing...")
@@ -331,5 +346,8 @@ def main():
         # Rename variables that are associated with Windows function that are loaded using
         # GetProcAddress()
         doMagic(ref, inst, instType)
+
+    print ("[+] Total variables successfully renamed: " + str(RENAMESUCCESS))
+    print ("[+] Total variables unable to be renamed: " + str(RENAMEERROR))
 
 main()
