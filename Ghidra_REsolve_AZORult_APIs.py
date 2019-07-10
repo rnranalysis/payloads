@@ -140,11 +140,11 @@ def renameVarAddr(callInst, lpProcName):
         varSymbol.setName("addr_" + lpProcName, ghidra.program.model.symbol.SourceType.USER_DEFINED)
     except:
         print ("[-] Symbol at address 0x" + varAddr.toString() + \
-               " could not be modified to addr" + lpProcName)
+               " could not be modified to addr_" + lpProcName)
         return FALSE
 
     print ("[+]   Symbol at address 0x" + varAddr.toString() + \
-           " has been changed to addr" + lpProcName)
+           " has been changed to addr_" + lpProcName)
 
     return TRUE
 
