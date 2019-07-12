@@ -62,31 +62,49 @@ def instMnemonic(inst):
 
 def getArgumentsToCall(callInst):
     """
-    Iterates upwards from the CALL instruction until two PUSH instructions are found.
-    If a CALL instruction is found before two PUSH instructions, then script will exit
-    with error because I don't know how many arguments an arbitrary function accepts.
+    Iterates upwards from the CALL instruction until two PUSH or LEA instructions are found.
+    A LEA instruction will load the string address into a register and then move it onto the
+    stack using a MOV [ESP] instruction.
+    If a CALL instruction is found while searching for arguments, the script will exit and raise
+    an exception because this is not expected and I don't want to modify the sample unnecessarily.
 
     Args:
         callInst: CALL instruction of type ghidra.program.database.code.InstructionDB
     Raises:
         None
     Returns:
-        pushInstList: List of 2 PUSH instructions of type ghidra.program.database.code.InstructionDB
+        argInstList: List of 2 instructions of type ghidra.program.database.code.InstructionDB
+                     which indicate the arguments passed to the function.
     """
 
-    pushInstList = []
-    
+    argInstList = []
+    pushConvention = FALSE
+
     prevInst = getInstructionBefore(callInst)
 
-    while len(pushInstList) < 2:
-        if "PUSH" in prevInst.toString():
-            pushInstList.append(prevInst)
+    while len(argInstList) < 2:
+        prevInstStr = prevInst.toString()
+        if "PUSH" in prevInstStr:
+            pushConvention = TRUE
+            argInstList.append(prevInst)
+        elif "LEA" in prevInstStr:
+            argInstList.append(prevInst)
+        elif "CALL" in prevInstStr:
+            raise Exception("CALL found while searching for arguments to CALL instruction " + \
+                            "at address 0x" + callInst.getAddress().toString() + ". Exiting!")
         prevInst = getInstructionBefore(prevInst)
 
-    print ("[+]   Arguments to CALL at address 0x" + callInst.getAddress().toString() + \
-           " are: " + str(pushInstList))
+    if pushConvention:
+        print ("[+]   Arguments to CALL at address 0x" + callInst.getAddress().toString() + \
+               " were passed with PUSH convention")
+    else:
+        print ("[+]   Arguments to CALL at address 0x" + callInst.getAddress().toString() + \
+               " were passed with MOV ESP convention")
 
-    return pushInstList
+    print ("[+]   Arguments to CALL at address 0x" + callInst.getAddress().toString() + \
+           " are: " + str(argInstList))
+
+    return argInstList
 
 def getWinMethodName(pushInstList):
     """
